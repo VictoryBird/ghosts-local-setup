@@ -197,11 +197,9 @@ services:
       ConnectionStrings__DefaultConnection: "Host=ghosts-postgres;Port=5432;Database=ghosts;User Id=ghosts;Password=scotty@1;"
       N8N_API_URL: "http://ghosts-n8n:5678/api/v1/workflows"
       N8N_API_KEY: "replace-me"
-      # CORS: allow Frontend and Pandora origins (with credentials support)
-      CorsPolicy__Origins__0: "http://${HOST_IP}:${PORT_FRONTEND}"
-      CorsPolicy__Origins__1: "http://localhost:${PORT_FRONTEND}"
-      CorsPolicy__Origins__2: "http://${HOST_IP}:${PORT_PANDORA}"
-      CorsPolicy__Origins__3: "http://localhost:${PORT_PANDORA}"
+      # CORS: allow all origins (credentials disabled to avoid AllowAnyOrigin conflict)
+      CorsPolicy__AllowAnyOrigin: "true"
+      CorsPolicy__SupportsCredentials: "false"
       # AnimatorSettings overrides for air-gapped Ollama
       AnimatorSettings__Animations__SocialSharing__PostUrl: "http://ghosts-pandora:5000"
       AnimatorSettings__Animations__SocialSharing__ContentEngine__Host: "http://host.docker.internal:11434"
