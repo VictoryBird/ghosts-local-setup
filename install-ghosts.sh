@@ -236,9 +236,8 @@ services:
       DATABASE_PROVIDER: "PostgreSQL"
       CONNECTION_STRING: "Host=ghosts-postgres;Port=5432;Database=pandora;Username=ghosts;Password=scotty@1"
       GHOSTS_API_URL: "http://ghosts-api:5000/api"
-      # Ollama for content generation
-      ApplicationConfiguration__Pandora__OllamaEnabled: "true"
-      ApplicationConfiguration__Pandora__OllamaApiUrl: "http://host.docker.internal:11434/api/generate"
+    volumes:
+      - ./config/pandora-appsettings.json:/app/appsettings.json:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -291,6 +290,78 @@ echo "[6/8] Creating configuration files..."
 mkdir -p "$GHOSTS_DIR/config"
 mkdir -p "$GHOSTS_DIR/content/social"
 mkdir -p "$GHOSTS_DIR/timelines"
+
+# Pandora appsettings.json (mounted into container)
+cat > "$GHOSTS_DIR/config/pandora-appsettings.json" << 'PANDORAEOF'
+{
+  "Logging": {
+    "LogLevel": {
+      "Microsoft.AspNetCore": "Warning",
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "System": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Error"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=db/pandora.db",
+    "PostgreSQL": "Host=ghosts-postgres;Port=5432;Database=pandora;Username=ghosts;Password=scotty@1"
+  },
+  "Database": {
+    "Provider": "PostgreSQL"
+  },
+  "ApplicationConfiguration": {
+    "Ghosts": {
+      "ApiUrl": "http://ghosts-api:5000/api",
+      "WorkflowsUrl": "http://ghosts-n8n:5678"
+    },
+    "Mode": {
+      "Type": "social",
+      "DefaultTheme": "facebook",
+      "SiteType": "news",
+      "SiteName": "Daily Chronicle",
+      "ArticleCount": 12
+    },
+    "DefaultDisplay": 35,
+    "MinutesToCheckForDuplicatePost": 2,
+    "CleanupDiskUtilThreshold": 70,
+    "CleanupJob": { "Hours": 0, "Minutes": 15, "Seconds": 0 },
+    "CleanupAge": { "Days": 0, "Hours": 60, "Minutes": 0 },
+    "Payloads": {
+      "Enabled": true,
+      "PayloadDirectory": "Payloads",
+      "Mappings": [
+        { "Url": "/downloads/document", "FileName": "sample.pdf", "ContentType": "application/pdf" }
+      ]
+    },
+    "Pandora": {
+      "Enabled": true,
+      "StoreResults": true,
+      "ContentCacheDirectory": "_data",
+      "OllamaEnabled": true,
+      "OllamaApiUrl": "http://host.docker.internal:11434/api/generate",
+      "OllamaTimeout": 120,
+      "OllamaModels": {
+        "Html": "llama3.2:3b",
+        "Image": "llama3.2:3b",
+        "Json": "llama3.2:3b",
+        "Ppt": "llama3.2:3b",
+        "Script": "llama3.2:3b",
+        "Stylesheet": "llama3.2:3b",
+        "Text": "llama3.2:3b",
+        "Voice": "llama3.2:3b",
+        "Xlsx": "llama3.2:3b",
+        "Pdf": "llama3.2:3b",
+        "Csv": "llama3.2:3b"
+      },
+      "ImageGeneration": { "Enabled": false, "Model": "stabilityai/sdxl-turbo" },
+      "VideoGeneration": { "Enabled": false },
+      "VoiceGeneration": { "Enabled": false }
+    }
+  }
+}
+PANDORAEOF
 
 # Pandora DB init script (create separate database for Pandora)
 cat > "$GHOSTS_DIR/config/init-pandora-db.sql" << 'SQLEOF'
