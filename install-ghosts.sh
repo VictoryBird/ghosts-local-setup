@@ -686,17 +686,19 @@ $DOCKER_CMD pull grafana/grafana
 
 # Patch Frontend Dockerfile: fix Angular peer dependency conflict
 FRONTEND_DOCKERFILE="$GHOSTS_DIR/GHOSTS/src/Ghosts.Frontend/Dockerfile"
-if grep -q "RUN npm ci$" "$FRONTEND_DOCKERFILE" 2>/dev/null; then
-    echo "  -> Patching Frontend Dockerfile (npm peer dependency fix)..."
-    sed -i 's/RUN npm ci$/RUN npm ci --legacy-peer-deps/' "$FRONTEND_DOCKERFILE"
+echo "  -> Patching Frontend Dockerfile (npm peer dependency fix)..."
+# Replace any "RUN npm ci" that doesn't already have --legacy-peer-deps
+if grep -q 'npm ci' "$FRONTEND_DOCKERFILE" 2>/dev/null; then
+    sed -i 's|RUN npm ci\b.*|RUN npm ci --legacy-peer-deps|' "$FRONTEND_DOCKERFILE"
+    echo "  -> Patched: $(grep 'npm ci' "$FRONTEND_DOCKERFILE")"
 fi
 
 # Build GHOSTS images from source
 echo "  -> Building GHOSTS API..."
 $COMPOSE_CMD build ghosts-api
 
-echo "  -> Building GHOSTS Frontend..."
-$COMPOSE_CMD build ghosts-frontend
+echo "  -> Building GHOSTS Frontend (no-cache due to Dockerfile patch)..."
+$COMPOSE_CMD build --no-cache ghosts-frontend
 
 echo "  -> Building GHOSTS Pandora/Socializer..."
 $COMPOSE_CMD build ghosts-pandora
