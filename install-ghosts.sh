@@ -40,6 +40,16 @@ echo "  Primary Model: $MODEL_PRIMARY"
 echo "============================================"
 echo ""
 
+# Helper: use sudo for docker if current user is not in docker group yet
+DOCKER_CMD="docker"
+COMPOSE_CMD="docker compose"
+_maybe_sudo_docker() {
+    if ! docker info &>/dev/null 2>&1; then
+        DOCKER_CMD="sudo docker"
+        COMPOSE_CMD="sudo docker compose"
+    fi
+}
+
 # -----------------------------------------------------------------------------
 # 1. System packages
 # -----------------------------------------------------------------------------
@@ -72,6 +82,9 @@ fi
 
 sudo systemctl enable docker
 sudo systemctl start docker
+
+# Detect whether we need sudo for docker commands
+_maybe_sudo_docker
 
 # -----------------------------------------------------------------------------
 # 3. Ollama
@@ -667,32 +680,32 @@ cd "$GHOSTS_DIR"
 
 # Pull base images first
 echo "  -> Pulling base images..."
-docker pull postgres:16.8
-docker pull docker.n8n.io/n8nio/n8n:latest
-docker pull grafana/grafana
+$DOCKER_CMD pull postgres:16.8
+$DOCKER_CMD pull docker.n8n.io/n8nio/n8n:latest
+$DOCKER_CMD pull grafana/grafana
 
 # Build GHOSTS images from source
 echo "  -> Building GHOSTS API..."
-docker compose build ghosts-api
+$COMPOSE_CMD build ghosts-api
 
 echo "  -> Building GHOSTS Frontend..."
-docker compose build ghosts-frontend
+$COMPOSE_CMD build ghosts-frontend
 
 echo "  -> Building GHOSTS Pandora/Socializer..."
-docker compose build ghosts-pandora
+$COMPOSE_CMD build ghosts-pandora
 
 # -----------------------------------------------------------------------------
 # 8. Start services
 # -----------------------------------------------------------------------------
 echo "[8/8] Starting all services..."
-docker compose up -d
+$COMPOSE_CMD up -d
 
 echo "  -> Waiting for services to initialize..."
 sleep 15
 
 # Health checks
 echo "  -> Checking service status..."
-docker compose ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || docker compose ps
+$COMPOSE_CMD ps --format "table {{.Name}}\t{{.Status}}" 2>/dev/null || $COMPOSE_CMD ps
 
 echo ""
 echo "  -> Testing API connectivity..."
