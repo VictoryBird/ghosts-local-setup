@@ -197,6 +197,8 @@ services:
       ConnectionStrings__DefaultConnection: "Host=ghosts-postgres;Port=5432;Database=ghosts;User Id=ghosts;Password=scotty@1;"
       N8N_API_URL: "http://ghosts-n8n:5678/api/v1/workflows"
       N8N_API_KEY: "replace-me"
+      # CORS: allow all origins (safe for air-gapped/internal use)
+      CorsPolicy__AllowAnyOrigin: "true"
       # AnimatorSettings overrides for air-gapped Ollama
       AnimatorSettings__Animations__SocialSharing__PostUrl: "http://ghosts-pandora:5000"
       AnimatorSettings__Animations__SocialSharing__ContentEngine__Host: "http://host.docker.internal:11434"
