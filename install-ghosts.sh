@@ -248,7 +248,7 @@ services:
       - "${PORT_PANDORA}:5000"
     environment:
       MODE_TYPE: "social"
-      DEFAULT_THEME: "facebook"
+      DEFAULT_THEME: "x"
       DATABASE_PROVIDER: "PostgreSQL"
       CONNECTION_STRING: "Host=ghosts-postgres;Port=5432;Database=pandora;Username=ghosts;Password=scotty@1"
       GHOSTS_API_URL: "http://ghosts-api:5000/api"
@@ -334,7 +334,7 @@ cat > "$GHOSTS_DIR/config/pandora-appsettings.json" << 'PANDORAEOF'
     },
     "Mode": {
       "Type": "social",
-      "DefaultTheme": "facebook",
+      "DefaultTheme": "x",
       "SiteType": "news",
       "SiteName": "Daily Chronicle",
       "ArticleCount": 12
@@ -784,6 +784,14 @@ echo "  -> Patching Frontend Dockerfile (npm peer dependency fix)..."
 if grep -q 'npm ci' "$FRONTEND_DOCKERFILE" 2>/dev/null; then
     sed -i 's|RUN npm ci\b.*|RUN npm ci --legacy-peer-deps|' "$FRONTEND_DOCKERFILE"
     echo "  -> Patched: $(grep 'npm ci' "$FRONTEND_DOCKERFILE")"
+fi
+
+# Patch GHOSTS API: influence tier system
+if [ -f "$GHOSTS_DIR/config-repo/ghosts-config/scripts/patch-influence-tier.sh" ]; then
+    echo "  -> Applying influence tier patch..."
+    bash "$GHOSTS_DIR/config-repo/ghosts-config/scripts/patch-influence-tier.sh" "$GHOSTS_DIR/GHOSTS/src"
+elif [ -f "$GHOSTS_DIR/GHOSTS/src/Ghosts.Api/Infrastructure/Animations/AnimationDefinitions/SocialGraphJob.cs.bak" ]; then
+    echo "  -> Influence tier patch already applied."
 fi
 
 # Build GHOSTS images from source
