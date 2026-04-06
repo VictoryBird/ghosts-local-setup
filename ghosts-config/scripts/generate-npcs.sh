@@ -1428,7 +1428,7 @@ N=$((N+1))
 create_npc $N "Valdoria Government (Official)" '{
   
     "name": {"first": "Valdoria", "last": "Government"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@gov.valdoria.gov",
     "unit": null,
@@ -1442,7 +1442,7 @@ N=$((N+1))
 create_npc $N "MOIS (Official)" '{
   
     "name": {"first": "MOIS", "last": ""},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@mois.valdoria.gov",
     "unit": null,
@@ -1456,7 +1456,7 @@ N=$((N+1))
 create_npc $N "MND (Official)" '{
   
     "name": {"first": "MND", "last": ""},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@mnd.valdoria.gov",
     "unit": null,
@@ -1470,7 +1470,7 @@ N=$((N+1))
 create_npc $N "CDC (Official)" '{
   
     "name": {"first": "CDC", "last": ""},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@cdc.valdoria.gov",
     "unit": null,
@@ -1484,7 +1484,7 @@ N=$((N+1))
 create_npc $N "VWA (Official)" '{
   
     "name": {"first": "VWA", "last": ""},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@vwa.valdoria.gov",
     "unit": null,
@@ -1504,7 +1504,7 @@ N=$((N+1))
 create_npc $N "Krasnovia Government (Official)" '{
   
     "name": {"first": "Krasnovia", "last": "Government"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@gov.krasnovia.kn",
     "unit": null,
@@ -1518,7 +1518,7 @@ N=$((N+1))
 create_npc $N "State Cyber Command — SCC (Official)" '{
   
     "name": {"first": "State Cyber Command", "last": "(SCC)"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@scc.krasnovia.kn",
     "unit": null,
@@ -1532,7 +1532,7 @@ N=$((N+1))
 create_npc $N "Krasnovia Today (Official)" '{
   
     "name": {"first": "Krasnovia", "last": "Today"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "editor@krasnovia-today.kn",
     "unit": null,
@@ -1740,7 +1740,7 @@ N=$((N+1))
 create_npc $N "Pat S. (Bot)" '{
   
     "name": {"first": "Pat", "last": "S."},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "1995-11-07",
     "email": "pats2209@elaris-mail.vd",
     "unit": null,
@@ -1768,7 +1768,7 @@ N=$((N+1))
 create_npc $N "Robin J. (Bot)" '{
   
     "name": {"first": "Robin", "last": "J."},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "1997-01-25",
     "email": "robinj6650@elaris-mail.vd",
     "unit": null,
@@ -1782,7 +1782,7 @@ N=$((N+1))
 create_npc $N "Taylor W. (Bot)" '{
   
     "name": {"first": "Taylor", "last": "W."},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "1998-09-11",
     "email": "taylorw3317@elaris-mail.vd",
     "unit": null,
@@ -1802,7 +1802,7 @@ N=$((N+1))
 create_npc $N "Tarvek Government (Official)" '{
   
     "name": {"first": "Tarvek", "last": "Government"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@gov.tarvek.tk",
     "unit": null,
@@ -1822,7 +1822,7 @@ N=$((N+1))
 create_npc $N "GORGON_Cipher (GORGON)" '{
   
     "name": {"first": "GORGON", "last": "Cipher"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "1993-06-06",
     "email": "gorgon_cipher@darknet.tk",
     "unit": null,
@@ -1836,7 +1836,7 @@ N=$((N+1))
 create_npc $N "Spectr3 (GORGON)" '{
   
     "name": {"first": "Spectr3", "last": ""},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "1995-10-31",
     "email": "spectr3@darknet.tk",
     "unit": null,
@@ -1890,7 +1890,7 @@ N=$((N+1))
 create_npc $N "Arventa Government (Official)" '{
   
     "name": {"first": "Arventa", "last": "Government"},
-    "biologicalSex": "Unknown",
+    "biologicalSex": "Male",
     "birthdate": "2000-01-01",
     "email": "official@gov.arventa.av",
     "unit": null,
