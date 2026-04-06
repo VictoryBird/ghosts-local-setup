@@ -101,73 +101,79 @@ declare -A ACCOUNT_IDS
 declare -A ACCOUNT_TOKENS
 
 # Helper: create a Mastodon account and get its API token
+# Uses Rails console directly to bypass email domain validation
 create_account_and_token() {
     local username="$1"
     local email="$2"
     local display_name="${3:-}"
 
-    # Create account via tootctl
-    local CREATE_OUTPUT
-    CREATE_OUTPUT=$(docker exec mastodon-web \
-        tootctl accounts create "${username}" \
-            --email "${email}" \
-            --confirmed 2>&1 || true)
-
-    # Check if account already exists
-    if echo "${CREATE_OUTPUT}" | grep -qi "already taken\|duplicate"; then
-        SKIPPED=$((SKIPPED + 1))
-        echo "  SKIP: ${username} (already exists)"
-    elif echo "${CREATE_OUTPUT}" | grep -qi "error\|fail"; then
-        FAILED=$((FAILED + 1))
-        echo "  FAIL: ${username}: ${CREATE_OUTPUT}"
-        return 1
-    fi
-
-    # Set display name if provided
-    if [[ -n "${display_name}" ]]; then
-        docker exec mastodon-web \
-            tootctl accounts modify "${username}" \
-                --display-name "${display_name}" 2>/dev/null || true
-    fi
-
-    # Generate API token via Rails console
-    local TOKEN
-    TOKEN=$(docker exec mastodon-web rails runner "
-user = User.find_by(email: '${email}')
-if user.nil?
-  account = Account.find_local('${username}')
-  user = account&.user
-end
-if user
-  app = Doorkeeper::Application.find_by(name: 'GHOSTS NPC Automation')
-  token = Doorkeeper::AccessToken.find_or_create_for(
-    application: app,
-    resource_owner: user,
-    scopes: Doorkeeper::OAuth::Scopes.from_string('read write follow push'),
-    expires_in: nil,
-    use_refresh_token: false
-  )
-  puts token.token
-else
-  STDERR.puts 'USER_NOT_FOUND'
-end
-" 2>/dev/null || true)
-
-    if [[ -z "${TOKEN}" || "${TOKEN}" == "USER_NOT_FOUND" ]]; then
-        echo "  WARN: Could not generate token for ${username}"
-        return 1
-    fi
-
-    # Get Mastodon account ID
-    local ACCOUNT_ID
-    ACCOUNT_ID=$(docker exec mastodon-web rails runner "
+    # Create account + generate token in a single Rails call
+    local RESULT
+    RESULT=$(docker exec mastodon-web rails runner "
 account = Account.find_local('${username}')
-puts account.id if account
-" 2>/dev/null || true)
+if account && account.user
+  STDERR.puts 'ALREADY_EXISTS'
+  # Still generate token for existing account
+  user = account.user
+else
+  # Create account and user via Rails, bypassing email validation
+  account = Account.new(username: '${username}')
+  account.display_name = '${display_name}'
+  account.save!(validate: false)
+
+  user = User.new(
+    email: '${email}',
+    password: SecureRandom.hex(16),
+    account: account,
+    confirmed_at: Time.now.utc,
+    approved: true,
+    agreement: true
+  )
+  user.save!(validate: false)
+  STDERR.puts 'CREATED'
+end
+
+# Ensure OAuth application exists
+app = Doorkeeper::Application.find_or_create_by!(name: 'GHOSTS NPC Automation') do |a|
+  a.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+  a.scopes = 'read write follow push'
+end
+
+# Generate access token
+token = Doorkeeper::AccessToken.find_or_create_for(
+  application: app,
+  resource_owner: user,
+  scopes: Doorkeeper::OAuth::Scopes.from_string('read write follow push'),
+  expires_in: nil,
+  use_refresh_token: false
+)
+
+puts \"#{account.id}|#{token.token}\"
+" 2>&1)
+
+    local STDERR_LINE
+    STDERR_LINE=$(echo "${RESULT}" | grep -E "ALREADY_EXISTS|CREATED" || true)
+    local DATA_LINE
+    DATA_LINE=$(echo "${RESULT}" | grep -E "^[0-9]+\|" || true)
+
+    if [[ -z "${DATA_LINE}" ]]; then
+        FAILED=$((FAILED + 1))
+        echo "  FAIL: ${username}: ${RESULT}" >&2
+        return 1
+    fi
+
+    local ACCOUNT_ID TOKEN
+    ACCOUNT_ID=$(echo "${DATA_LINE}" | cut -d'|' -f1)
+    TOKEN=$(echo "${DATA_LINE}" | cut -d'|' -f2)
+
+    if echo "${STDERR_LINE}" | grep -q "ALREADY_EXISTS"; then
+        SKIPPED=$((SKIPPED + 1))
+    else
+        CREATED=$((CREATED + 1))
+    fi
 
     ACCOUNT_IDS["${username}"]="${ACCOUNT_ID}"
     ACCOUNT_TOKENS["${username}"]="${TOKEN}"
-    CREATED=$((CREATED + 1))
 
     echo "${ACCOUNT_ID}" # Return account ID
 }
@@ -281,10 +287,10 @@ declare -a ARVENTA_CITIZENS=()
 declare -a ALL_USERNAMES=()
 
 for i in $(seq 0 $((NPC_COUNT - 1))); do
-    FIRST=$(echo "${NPC_JSON}" | jq -r ".[$i].name.first // empty")
-    LAST=$(echo "${NPC_JSON}" | jq -r ".[$i].name.last // empty")
-    COUNTRY=$(echo "${NPC_JSON}" | jq -r ".[$i].attributes.country // \"unknown\"")
-    ROLE=$(echo "${NPC_JSON}" | jq -r ".[$i].attributes.role // \"citizen\"")
+    FIRST=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.name.first // empty")
+    LAST=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.name.last // empty")
+    COUNTRY=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.attributes.country // \"unknown\"")
+    ROLE=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.attributes.role // \"citizen\"")
 
     [[ -z "${FIRST}" || -z "${LAST}" ]] && continue
 
