@@ -196,11 +196,11 @@ echo "  --- Creating NPC accounts ---"
 
 # Process each NPC from GHOSTS API
 for i in $(seq 0 $((NPC_COUNT - 1))); do
-    FIRST=$(echo "${NPC_JSON}" | jq -r ".[$i].name.first // empty")
-    LAST=$(echo "${NPC_JSON}" | jq -r ".[$i].name.last // empty")
-    EMAIL=$(echo "${NPC_JSON}" | jq -r ".[$i].email // empty")
-    COUNTRY=$(echo "${NPC_JSON}" | jq -r ".[$i].attributes.country // \"unknown\"")
-    ROLE=$(echo "${NPC_JSON}" | jq -r ".[$i].attributes.role // \"citizen\"")
+    FIRST=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.name.first // empty")
+    LAST=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.name.last // empty")
+    EMAIL=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.email // empty")
+    COUNTRY=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.attributes.country // \"unknown\"")
+    ROLE=$(echo "${NPC_JSON}" | jq -r ".[$i].npcProfile.attributes.role // \"citizen\"")
     NPC_ID=$(echo "${NPC_JSON}" | jq -r ".[$i].id // empty")
 
     if [[ -z "${FIRST}" || -z "${LAST}" ]]; then
