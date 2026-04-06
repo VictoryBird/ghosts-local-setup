@@ -22,10 +22,24 @@ GHOSTS의 NPC 생성 데이터를 세계관(Valdoria/Krasnovia)에 맞게 교체
 - [ ] `address_international_cities.json` — Valdoria 도시(Elaris, Silicon Coast, Port Callisto 등) 데이터로 교체
 - [ ] `universities.json` — Valdoria 가상 대학 목록 작성
 
-### 1-4. 아바타 이미지 AI 생성
-- [ ] NPC 속성(성별/나이대/직업)별 프롬프트 템플릿 설계
-- [ ] 온라인 환경에서 이미지 일괄 생성 스크립트 작성
-- [ ] `config/photos/male/`, `config/photos/female/`에 배치
+### 1-4. 아바타 이미지 AI 생성 (OpenAI API + 스크립트 자동화)
+- [ ] NPC 130명 속성(성별/나이대/직업) 기반 프롬프트 템플릿 설계
+- [ ] OpenAI DALL-E API 이미지 일괄 생성 스크립트 작성
+- [ ] 생성된 이미지를 NPC ID와 매핑하여 `config/photos/`에 배치
+- [ ] NPC 생성 시 PhotoLink 필드에 경로 자동 설정
+
+### 1-5. 소셜 포스트용 이미지 에셋 준비
+- [ ] 국가별 로고/국기 제작 (4개국: Valdoria, Krasnovia, Tarvek, Arventa)
+- [ ] 뉴스 매체 로고 제작 (Krasnovia Today, VNB, Elaris Tribune, MNN)
+- [ ] 이미지 카드 템플릿 제작 (5~6종):
+  - 공식 성명 카드 (로고 + 성명 텍스트)
+  - 뉴스 기사 썸네일 (배경 + 헤드라인)
+  - 보안 경고/공지 카드 (CDC, SCC 등)
+  - 랜섬웨어 통지 카드 (GORGON — 과도하지 않은 톤)
+  - 동맹 지지 성명 카드 (Arventa)
+- [ ] Python(Pillow) 텍스트 합성 스크립트 작성
+  - Ollama 텍스트 생성 → 템플릿에 자동 합성 → 이미지 카드 출력
+  - n8n 워크플로우에서 포스트 시 자동 호출
 
 ---
 
