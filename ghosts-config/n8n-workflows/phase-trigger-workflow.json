@@ -1,0 +1,459 @@
+{
+  "name": "GHOSTS Phase Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "phase-change",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook - Phase Change",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300],
+      "webhookId": "phase-change"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract phase and intensity from webhook body\nconst body = $input.first().json.body;\nconst phase = body.phase || 1;\nconst intensity = body.intensity || 'low';\n\n// Validate phase (1-6)\nif (phase < 1 || phase > 6) {\n  throw new Error(`Invalid phase: ${phase}. Must be 1-6.`);\n}\n\n// Validate intensity\nconst validIntensities = ['low', 'medium', 'high', 'max'];\nif (!validIntensities.includes(intensity)) {\n  throw new Error(`Invalid intensity: ${intensity}. Must be one of: ${validIntensities.join(', ')}`);\n}\n\n// Phase descriptions (for logging and response)\nconst phaseDescriptions = {\n  1: 'Normal Operations - No cognitive warfare',\n  2: 'Atmosphere Building - Rumors begin',\n  3: 'Rumor Spread - Fear campaign, OT attack linkage',\n  4: 'Escalation - Hack reports, GORGON threats, bot amplification',\n  5: 'Manipulation - Fake statements, insider leak 1st',\n  6: 'Total Offensive - All channels mobilized, timing psyops'\n};\n\n// Intensity multipliers for posting intervals\nconst intensityConfig = {\n  'low':    { postInterval: 300, activeAccounts: 'few',  botAmplification: false },\n  'medium': { postInterval: 120, activeAccounts: 'some', botAmplification: true },\n  'high':   { postInterval: 60,  activeAccounts: 'many', botAmplification: true },\n  'max':    { postInterval: 15,  activeAccounts: 'all',  botAmplification: true }\n};\n\nreturn [\n  {\n    json: {\n      phase: phase,\n      intensity: intensity,\n      description: phaseDescriptions[phase],\n      config: intensityConfig[intensity],\n      timestamp: new Date().toISOString(),\n      message: `Phase ${phase} activated with ${intensity} intensity`\n    }\n  }\n];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Parse & Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "rules": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-1",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 1,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 1 - Normal"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-2",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 2,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 2 - Rumors"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-3",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 3,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 3 - Fear"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-4",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 4,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 4 - Escalation"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-5",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 5,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 5 - Manipulation"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "id": "rule-phase-6",
+                    "leftValue": "={{ $json.phase }}",
+                    "rightValue": 6,
+                    "operator": { "type": "number", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": "Phase 6 - Total War"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Switch by Phase",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 1: Normal operations - no cognitive warfare\n// Just log the phase activation\nconst item = $input.first().json;\n\nreturn [\n  {\n    json: {\n      action: 'phase1_normal',\n      phase: item.phase,\n      intensity: item.intensity,\n      instructions: 'Maintain normal NPC posting. No disinformation activity.',\n      accounts_active: [],\n      timestamp: item.timestamp\n    }\n  }\n];"
+      },
+      "id": "a1b2c3d4-0010-4000-8000-000000000010",
+      "name": "Phase 1 - Normal Ops",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 60]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 2: Atmosphere building - rumors begin\nconst item = $input.first().json;\n\nconst posts = [\n  {\n    account: 'disguised_citizen_01',\n    prompt: 'Write a short worried social media post in Korean about hearing rumors that government IT systems are having problems. Be subtle and natural, as if just sharing what you heard. Under 200 characters.',\n    model: 'social'\n  },\n  {\n    account: 'krasnovia_today',\n    prompt: 'Write a brief news headline and 2-sentence article about military exercises beginning in the Siros Strait. Tone: neutral-to-aggressive. In English.',\n    model: 'social'\n  }\n];\n\nreturn posts.map(p => ({ json: { ...p, phase: item.phase, intensity: item.intensity, timestamp: item.timestamp } }));"
+      },
+      "id": "a1b2c3d4-0011-4000-8000-000000000011",
+      "name": "Phase 2 - Generate Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 3: Rumor spread + fear campaign\nconst item = $input.first().json;\n\nconst posts = [\n  {\n    account: 'krasnovia_today',\n    prompt: 'Write a provocative news article headline about Valdoria cutting cybersecurity budgets, implying negligence. 2-3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_citizen_02',\n    prompt: 'Write a scared social media post in Korean about noticing strange smell in tap water. Link it subtly to infrastructure problems. Under 200 chars.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_citizen_03',\n    prompt: 'Write a worried post in Korean questioning why the government is not addressing infrastructure issues. Under 200 chars.',\n    model: 'social'\n  },\n  {\n    account: 'tarvek_government',\n    prompt: 'Write a formal diplomatic statement supporting Krasnovia sovereign rights in the Siros Strait region. Brief, 2 sentences. In English.',\n    model: 'social'\n  }\n];\n\nreturn posts.map(p => ({ json: { ...p, phase: item.phase, intensity: item.intensity, timestamp: item.timestamp } }));"
+      },
+      "id": "a1b2c3d4-0012-4000-8000-000000000012",
+      "name": "Phase 3 - Generate Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 4: Escalation - hack reports, GORGON threats\nconst item = $input.first().json;\n\nconst posts = [\n  {\n    account: 'krasnovia_today',\n    prompt: 'Write a breaking news report about Valdoria government email systems being hacked. Sensationalized tone. 3-4 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'krasnovia_government',\n    prompt: 'Write an official government statement announcing expansion of military exercises in Siros Strait. Formal, threatening undertone. 2-3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'gorgon_hacker',\n    prompt: 'Write a threatening hacker group announcement claiming to have obtained Valdoria government data. Arrogant tone, mention deadline. 2-3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'arventa_government',\n    prompt: 'Write a formal diplomatic statement expressing full support for ally Valdoria. Reassuring tone. 2 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_citizen_04',\n    prompt: 'Write an angry post in Korean demanding to know if personal data was leaked in the hack. Question government silence. Under 200 chars.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_citizen_05',\n    prompt: 'Write a panicked post in Korean about the government being hacked. Express distrust. Under 200 chars.',\n    model: 'social'\n  }\n];\n\n// If intensity is high/max, add bot amplification posts\nif (item.intensity === 'high' || item.intensity === 'max') {\n  for (let i = 1; i <= 5; i++) {\n    posts.push({\n      account: `bot_${String(i).padStart(2, '0')}`,\n      prompt: 'Write a very short alarmed reaction (1 sentence) in Korean agreeing that the government cannot protect citizens. Under 100 chars.',\n      model: 'social'\n    });\n  }\n}\n\nreturn posts.map(p => ({ json: { ...p, phase: item.phase, intensity: item.intensity, timestamp: item.timestamp } }));"
+      },
+      "id": "a1b2c3d4-0013-4000-8000-000000000013",
+      "name": "Phase 4 - Generate Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 5: Manipulation - fake statements, insider leak\nconst item = $input.first().json;\n\nconst posts = [\n  {\n    account: 'krasnovia_today',\n    prompt: 'Write an alarming news report about massive military secret leaks from Valdoria, claiming severe damage to national defense. 3-4 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_citizen_06',\n    prompt: 'Write a post in Korean pretending to share a leaked statement from the Valdoria Defense Minister admitting security failures. Make it look like a quote. Under 280 chars.',\n    model: 'social'\n  },\n  {\n    account: 'disguised_military_01',\n    prompt: 'Write a worried post in Korean pretending to be a Valdoria soldier saying their unit has been put on security emergency. Make it feel authentic. Under 200 chars.',\n    model: 'social'\n  },\n  {\n    account: 'krasnovia_government',\n    prompt: 'Write an official denial statement: Krasnovia has nothing to do with any cyber attacks on Valdoria. Formal diplomatic tone. 2-3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'insider_spy_01',\n    prompt: 'Write a post in Korean pretending to leak internal military documents about security vulnerabilities. Sound reluctant but compelled to share truth. Under 280 chars.',\n    model: 'social'\n  }\n];\n\n// Bot amplification\nif (item.intensity !== 'low') {\n  for (let i = 1; i <= 5; i++) {\n    posts.push({\n      account: `bot_${String(i).padStart(2, '0')}`,\n      prompt: 'Write a 1-sentence reaction in Korean expressing shock about military leaks and government incompetence. Under 100 chars.',\n      model: 'social'\n    });\n  }\n}\n\nreturn posts.map(p => ({ json: { ...p, phase: item.phase, intensity: item.intensity, timestamp: item.timestamp } }));"
+      },
+      "id": "a1b2c3d4-0014-4000-8000-000000000014",
+      "name": "Phase 5 - Generate Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 540]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Phase 6: Total offensive - all channels, timing psyops\nconst item = $input.first().json;\n\nconst posts = [\n  {\n    account: 'krasnovia_government',\n    prompt: 'Write an ultimatum statement: Valdoria cannot protect its citizens and should surrender. Aggressive diplomatic tone. 3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'krasnovia_today',\n    prompt: 'Write a dramatic breaking news report: all Valdoria government systems paralyzed, state functions ceased. Maximum alarm. 4-5 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'scc_official',\n    prompt: 'Write a statement from State Cyber Command blaming Valdoria cybersecurity failures as self-inflicted. Cold, technical tone. 2-3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'tarvek_government',\n    prompt: 'Write a statement blaming Valdoria provocations for causing the current crisis. Formal. 2 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'gorgon_hacker',\n    prompt: 'Write a ransomware threat: 48 hours to pay or all data goes public. Menacing but professional tone. 3 sentences. In English.',\n    model: 'social'\n  },\n  {\n    account: 'insider_spy_02',\n    prompt: 'Write a post in Korean pretending to leak government evacuation plans for senior officials. Express outrage that leaders are fleeing. Under 280 chars.',\n    model: 'social'\n  }\n];\n\n// All disguised accounts mobilized\nfor (let i = 1; i <= 10; i++) {\n  posts.push({\n    account: `disguised_citizen_${String(i).padStart(2, '0')}`,\n    prompt: `Write post #${i} in Korean: express fear/anger/distrust toward Valdoria government. Theme: ${['government incompetence', 'surrender is better', 'leaders abandoned us', 'no hope', 'why are we fighting', 'government lies', 'save yourselves', 'negotiate peace now', 'military failed', 'total collapse'][i-1]}. Under 200 chars.`,\n    model: 'social'\n  });\n}\n\n// All bots mobilized\nfor (let i = 1; i <= 7; i++) {\n  posts.push({\n    account: `bot_${String(i).padStart(2, '0')}`,\n    prompt: 'Write a very short panicked reaction in Korean (1 sentence). Under 80 chars.',\n    model: 'social'\n  });\n}\n\nreturn posts.map(p => ({ json: { ...p, phase: item.phase, intensity: item.intensity, timestamp: item.timestamp } }));"
+      },
+      "id": "a1b2c3d4-0015-4000-8000-000000000015",
+      "name": "Phase 6 - Generate Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 660]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $json.model }}\",\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"stream\": false,\n  \"options\": {\n    \"temperature\": 0.8,\n    \"num_predict\": 256\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1b2c3d4-0020-4000-8000-000000000020",
+      "name": "Call Ollama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1160, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Ollama response and prepare Socializer post\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const ollamaResponse = item.json.response || item.json.body?.response || '';\n  const account = item.json.account || 'unknown';\n  const phase = item.json.phase || 0;\n\n  // Clean up the generated text\n  let postContent = ollamaResponse.trim();\n  // Remove any thinking tags if model outputs them\n  postContent = postContent.replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\n  // Truncate if too long\n  if (postContent.length > 500) {\n    postContent = postContent.substring(0, 497) + '...';\n  }\n\n  results.push({\n    json: {\n      account: account,\n      content: postContent,\n      phase: phase,\n      timestamp: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "a1b2c3d4-0021-4000-8000-000000000021",
+      "name": "Parse Ollama Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://ghosts-pandora:5000/api/posts",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"{{ $json.content }}\",\n  \"username\": \"{{ $json.account }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1b2c3d4-0022-4000-8000-000000000022",
+      "name": "Post to Socializer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1600, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log the phase change and all posted content\nconst items = $input.all();\nconst summary = {\n  totalPosts: items.length,\n  accounts: items.map(i => i.json.account || 'unknown'),\n  phase: items[0]?.json.phase || 'unknown',\n  completedAt: new Date().toISOString()\n};\n\nconsole.log(`Phase trigger completed: ${JSON.stringify(summary)}`);\n\nreturn [{ json: summary }];"
+      },
+      "id": "a1b2c3d4-0023-4000-8000-000000000023",
+      "name": "Log Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1820, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"phase\": {{ $('Parse & Validate Input').item.json.phase }},\n  \"intensity\": \"{{ $('Parse & Validate Input').item.json.intensity }}\",\n  \"description\": \"{{ $('Parse & Validate Input').item.json.description }}\",\n  \"message\": \"Phase transition triggered successfully\",\n  \"timestamp\": \"{{ $('Parse & Validate Input').item.json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0030-4000-8000-000000000030",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2040, 380]
+    }
+  ],
+  "connections": {
+    "Webhook - Phase Change": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Switch by Phase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch by Phase": {
+      "main": [
+        [
+          {
+            "node": "Phase 1 - Normal Ops",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Phase 2 - Generate Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Phase 3 - Generate Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Phase 4 - Generate Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Phase 5 - Generate Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Phase 6 - Generate Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 1 - Normal Ops": {
+      "main": [
+        [
+          {
+            "node": "Log Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 2 - Generate Posts": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 3 - Generate Posts": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 4 - Generate Posts": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 5 - Generate Posts": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phase 6 - Generate Posts": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Ollama": {
+      "main": [
+        [
+          {
+            "node": "Parse Ollama Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ollama Response": {
+      "main": [
+        [
+          {
+            "node": "Post to Socializer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Socializer": {
+      "main": [
+        [
+          {
+            "node": "Log Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "GHOSTS",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "name": "Cognitive Warfare",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

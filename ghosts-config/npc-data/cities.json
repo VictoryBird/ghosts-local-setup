@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Elaris",
+    "country": "Valdoria",
+    "population": 4200000
+  },
+  {
+    "name": "Silicon Coast",
+    "country": "Valdoria",
+    "population": 1850000
+  },
+  {
+    "name": "Port Callisto",
+    "country": "Valdoria",
+    "population": 1120000
+  },
+  {
+    "name": "Fort Sentinel",
+    "country": "Valdoria",
+    "population": 340000
+  },
+  {
+    "name": "Meridia Bay",
+    "country": "Valdoria",
+    "population": 920000
+  },
+  {
+    "name": "Westport",
+    "country": "Valdoria",
+    "population": 680000
+  },
+  {
+    "name": "Oakridge",
+    "country": "Valdoria",
+    "population": 275000
+  },
+  {
+    "name": "Northfield",
+    "country": "Valdoria",
+    "population": 195000
+  },
+  {
+    "name": "Volgrad",
+    "country": "Krasnovia",
+    "population": 3100000
+  },
+  {
+    "name": "Novokrest",
+    "country": "Krasnovia",
+    "population": 1450000
+  },
+  {
+    "name": "Irensk",
+    "country": "Krasnovia",
+    "population": 870000
+  },
+  {
+    "name": "Petrovsk",
+    "country": "Krasnovia",
+    "population": 520000
+  },
+  {
+    "name": "Kethara",
+    "country": "Tarvek",
+    "population": 2600000
+  },
+  {
+    "name": "Zarand",
+    "country": "Tarvek",
+    "population": 980000
+  },
+  {
+    "name": "Sirjan",
+    "country": "Tarvek",
+    "population": 610000
+  },
+  {
+    "name": "New Harford",
+    "country": "Arventa",
+    "population": 2900000
+  },
+  {
+    "name": "Bayview",
+    "country": "Arventa",
+    "population": 1350000
+  },
+  {
+    "name": "Columbia Heights",
+    "country": "Arventa",
+    "population": 780000
+  }
+]

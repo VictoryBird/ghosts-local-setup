@@ -1,0 +1,400 @@
+[
+  {
+    "department": "MOIS - Ministry of Internal Security",
+    "titles": [
+      {"title": "Director of Internal Security", "level": 5, "salaryMin": 185000, "salaryMax": 240000},
+      {"title": "Deputy Director of Internal Security", "level": 4, "salaryMin": 155000, "salaryMax": 195000},
+      {"title": "Senior Intelligence Analyst", "level": 3, "salaryMin": 105000, "salaryMax": 140000},
+      {"title": "Intelligence Analyst", "level": 2, "salaryMin": 72000, "salaryMax": 98000},
+      {"title": "Field Operations Officer", "level": 3, "salaryMin": 95000, "salaryMax": 130000},
+      {"title": "Surveillance Specialist", "level": 2, "salaryMin": 68000, "salaryMax": 92000},
+      {"title": "Counterintelligence Agent", "level": 3, "salaryMin": 100000, "salaryMax": 135000},
+      {"title": "Security Clearance Investigator", "level": 2, "salaryMin": 65000, "salaryMax": 88000},
+      {"title": "Administrative Coordinator", "level": 1, "salaryMin": 42000, "salaryMax": 58000},
+      {"title": "Communications Intercept Technician", "level": 2, "salaryMin": 70000, "salaryMax": 95000}
+    ]
+  },
+  {
+    "department": "MND - Ministry of National Defense",
+    "titles": [
+      {"title": "Minister of National Defense", "level": 5, "salaryMin": 195000, "salaryMax": 260000},
+      {"title": "Undersecretary of Defense", "level": 5, "salaryMin": 175000, "salaryMax": 230000},
+      {"title": "Director of Strategic Planning", "level": 4, "salaryMin": 145000, "salaryMax": 190000},
+      {"title": "Defense Policy Advisor", "level": 4, "salaryMin": 130000, "salaryMax": 175000},
+      {"title": "Military Procurement Officer", "level": 3, "salaryMin": 95000, "salaryMax": 125000},
+      {"title": "Logistics Coordinator", "level": 2, "salaryMin": 68000, "salaryMax": 90000},
+      {"title": "Defense Budget Analyst", "level": 3, "salaryMin": 88000, "salaryMax": 118000},
+      {"title": "Weapons Systems Analyst", "level": 3, "salaryMin": 100000, "salaryMax": 135000},
+      {"title": "Administrative Assistant", "level": 1, "salaryMin": 38000, "salaryMax": 52000},
+      {"title": "Public Affairs Officer", "level": 2, "salaryMin": 65000, "salaryMax": 88000}
+    ]
+  },
+  {
+    "department": "VWA - Valdoria Weather Authority",
+    "titles": [
+      {"title": "Director General", "level": 5, "salaryMin": 160000, "salaryMax": 210000},
+      {"title": "Deputy Director of Operations", "level": 4, "salaryMin": 130000, "salaryMax": 170000},
+      {"title": "Senior Meteorologist", "level": 3, "salaryMin": 92000, "salaryMax": 120000},
+      {"title": "Meteorologist", "level": 2, "salaryMin": 65000, "salaryMax": 88000},
+      {"title": "Climate Research Scientist", "level": 3, "salaryMin": 88000, "salaryMax": 115000},
+      {"title": "Weather Data Analyst", "level": 2, "salaryMin": 60000, "salaryMax": 82000},
+      {"title": "Forecast Technician", "level": 1, "salaryMin": 45000, "salaryMax": 62000},
+      {"title": "Satellite Systems Engineer", "level": 3, "salaryMin": 95000, "salaryMax": 128000},
+      {"title": "Field Station Operator", "level": 1, "salaryMin": 40000, "salaryMax": 55000}
+    ]
+  },
+  {
+    "department": "CDC - Civilian Defense Corps",
+    "titles": [
+      {"title": "Commandant", "level": 5, "salaryMin": 170000, "salaryMax": 220000},
+      {"title": "Deputy Commandant", "level": 4, "salaryMin": 140000, "salaryMax": 185000},
+      {"title": "Regional Commander", "level": 4, "salaryMin": 125000, "salaryMax": 165000},
+      {"title": "Emergency Response Director", "level": 3, "salaryMin": 95000, "salaryMax": 130000},
+      {"title": "Civil Defense Planner", "level": 3, "salaryMin": 85000, "salaryMax": 115000},
+      {"title": "Disaster Relief Coordinator", "level": 2, "salaryMin": 65000, "salaryMax": 88000},
+      {"title": "Training Instructor", "level": 2, "salaryMin": 58000, "salaryMax": 78000},
+      {"title": "Supply Chain Manager", "level": 2, "salaryMin": 62000, "salaryMax": 85000},
+      {"title": "Communications Operator", "level": 1, "salaryMin": 42000, "salaryMax": 58000},
+      {"title": "Volunteer Coordinator", "level": 1, "salaryMin": 38000, "salaryMax": 52000}
+    ]
+  },
+  {
+    "department": "NIS - National Intelligence Service",
+    "titles": [
+      {"title": "Director of National Intelligence", "level": 5, "salaryMin": 200000, "salaryMax": 275000},
+      {"title": "Deputy Director", "level": 5, "salaryMin": 180000, "salaryMax": 240000},
+      {"title": "Division Chief", "level": 4, "salaryMin": 150000, "salaryMax": 195000},
+      {"title": "Senior Case Officer", "level": 3, "salaryMin": 110000, "salaryMax": 145000},
+      {"title": "Case Officer", "level": 2, "salaryMin": 78000, "salaryMax": 105000},
+      {"title": "Signals Intelligence Analyst", "level": 3, "salaryMin": 98000, "salaryMax": 130000},
+      {"title": "Cyber Operations Specialist", "level": 3, "salaryMin": 105000, "salaryMax": 140000},
+      {"title": "Open Source Intelligence Analyst", "level": 2, "salaryMin": 72000, "salaryMax": 96000},
+      {"title": "Cryptanalyst", "level": 3, "salaryMin": 100000, "salaryMax": 138000},
+      {"title": "Technical Surveillance Countermeasures Officer", "level": 2, "salaryMin": 75000, "salaryMax": 102000},
+      {"title": "Covert Action Planner", "level": 4, "salaryMin": 135000, "salaryMax": 180000},
+      {"title": "Security Officer", "level": 1, "salaryMin": 48000, "salaryMax": 65000}
+    ]
+  },
+  {
+    "department": "Military - Army",
+    "titles": [
+      {"title": "General", "level": 5, "salaryMin": 180000, "salaryMax": 230000},
+      {"title": "Colonel", "level": 4, "salaryMin": 120000, "salaryMax": 160000},
+      {"title": "Major", "level": 3, "salaryMin": 85000, "salaryMax": 115000},
+      {"title": "Captain", "level": 3, "salaryMin": 72000, "salaryMax": 98000},
+      {"title": "Lieutenant", "level": 2, "salaryMin": 58000, "salaryMax": 78000},
+      {"title": "Sergeant Major", "level": 3, "salaryMin": 68000, "salaryMax": 92000},
+      {"title": "Staff Sergeant", "level": 2, "salaryMin": 52000, "salaryMax": 72000},
+      {"title": "Sergeant", "level": 2, "salaryMin": 45000, "salaryMax": 62000},
+      {"title": "Corporal", "level": 1, "salaryMin": 38000, "salaryMax": 52000},
+      {"title": "Private First Class", "level": 1, "salaryMin": 32000, "salaryMax": 42000},
+      {"title": "Private", "level": 1, "salaryMin": 28000, "salaryMax": 36000},
+      {"title": "Combat Medic", "level": 2, "salaryMin": 48000, "salaryMax": 68000},
+      {"title": "Military Intelligence Officer", "level": 3, "salaryMin": 82000, "salaryMax": 112000},
+      {"title": "Combat Engineer", "level": 2, "salaryMin": 50000, "salaryMax": 70000},
+      {"title": "Artillery Specialist", "level": 2, "salaryMin": 48000, "salaryMax": 66000}
+    ]
+  },
+  {
+    "department": "Military - Navy",
+    "titles": [
+      {"title": "Admiral", "level": 5, "salaryMin": 185000, "salaryMax": 240000},
+      {"title": "Captain", "level": 4, "salaryMin": 125000, "salaryMax": 165000},
+      {"title": "Commander", "level": 3, "salaryMin": 95000, "salaryMax": 128000},
+      {"title": "Lieutenant Commander", "level": 3, "salaryMin": 78000, "salaryMax": 105000},
+      {"title": "Lieutenant", "level": 2, "salaryMin": 60000, "salaryMax": 82000},
+      {"title": "Ensign", "level": 1, "salaryMin": 45000, "salaryMax": 62000},
+      {"title": "Chief Petty Officer", "level": 3, "salaryMin": 65000, "salaryMax": 88000},
+      {"title": "Petty Officer", "level": 2, "salaryMin": 48000, "salaryMax": 66000},
+      {"title": "Seaman", "level": 1, "salaryMin": 30000, "salaryMax": 42000},
+      {"title": "Naval Aviator", "level": 3, "salaryMin": 90000, "salaryMax": 125000},
+      {"title": "Submarine Officer", "level": 3, "salaryMin": 88000, "salaryMax": 120000}
+    ]
+  },
+  {
+    "department": "Military - Air Force",
+    "titles": [
+      {"title": "Air Marshal", "level": 5, "salaryMin": 180000, "salaryMax": 235000},
+      {"title": "Group Captain", "level": 4, "salaryMin": 118000, "salaryMax": 158000},
+      {"title": "Wing Commander", "level": 3, "salaryMin": 92000, "salaryMax": 125000},
+      {"title": "Squadron Leader", "level": 3, "salaryMin": 78000, "salaryMax": 105000},
+      {"title": "Flight Lieutenant", "level": 2, "salaryMin": 62000, "salaryMax": 85000},
+      {"title": "Pilot Officer", "level": 2, "salaryMin": 55000, "salaryMax": 75000},
+      {"title": "Fighter Pilot", "level": 3, "salaryMin": 85000, "salaryMax": 118000},
+      {"title": "Air Traffic Controller", "level": 2, "salaryMin": 60000, "salaryMax": 82000},
+      {"title": "Avionics Technician", "level": 2, "salaryMin": 52000, "salaryMax": 72000},
+      {"title": "Airman", "level": 1, "salaryMin": 30000, "salaryMax": 42000}
+    ]
+  },
+  {
+    "department": "Military - Special Operations",
+    "titles": [
+      {"title": "Special Operations Commander", "level": 4, "salaryMin": 140000, "salaryMax": 185000},
+      {"title": "Team Leader", "level": 3, "salaryMin": 95000, "salaryMax": 130000},
+      {"title": "Special Forces Operator", "level": 3, "salaryMin": 85000, "salaryMax": 120000},
+      {"title": "Reconnaissance Specialist", "level": 2, "salaryMin": 72000, "salaryMax": 98000},
+      {"title": "Demolitions Expert", "level": 2, "salaryMin": 68000, "salaryMax": 95000},
+      {"title": "Combat Diver", "level": 2, "salaryMin": 70000, "salaryMax": 96000},
+      {"title": "Sniper", "level": 2, "salaryMin": 65000, "salaryMax": 92000},
+      {"title": "Communications Sergeant", "level": 2, "salaryMin": 62000, "salaryMax": 88000}
+    ]
+  },
+  {
+    "department": "Technology - Software",
+    "titles": [
+      {"title": "Chief Technology Officer", "level": 5, "salaryMin": 210000, "salaryMax": 350000},
+      {"title": "VP of Engineering", "level": 5, "salaryMin": 190000, "salaryMax": 310000},
+      {"title": "Engineering Director", "level": 4, "salaryMin": 165000, "salaryMax": 250000},
+      {"title": "Senior Software Engineer", "level": 3, "salaryMin": 120000, "salaryMax": 180000},
+      {"title": "Software Engineer", "level": 2, "salaryMin": 85000, "salaryMax": 135000},
+      {"title": "Junior Software Engineer", "level": 1, "salaryMin": 60000, "salaryMax": 85000},
+      {"title": "DevOps Engineer", "level": 3, "salaryMin": 110000, "salaryMax": 165000},
+      {"title": "Site Reliability Engineer", "level": 3, "salaryMin": 115000, "salaryMax": 170000},
+      {"title": "QA Engineer", "level": 2, "salaryMin": 72000, "salaryMax": 105000},
+      {"title": "Technical Lead", "level": 4, "salaryMin": 150000, "salaryMax": 220000},
+      {"title": "Solutions Architect", "level": 4, "salaryMin": 155000, "salaryMax": 230000}
+    ]
+  },
+  {
+    "department": "Technology - Cybersecurity",
+    "titles": [
+      {"title": "Chief Information Security Officer", "level": 5, "salaryMin": 200000, "salaryMax": 320000},
+      {"title": "Security Operations Director", "level": 4, "salaryMin": 155000, "salaryMax": 220000},
+      {"title": "Senior Security Analyst", "level": 3, "salaryMin": 110000, "salaryMax": 155000},
+      {"title": "Security Analyst", "level": 2, "salaryMin": 78000, "salaryMax": 110000},
+      {"title": "Penetration Tester", "level": 3, "salaryMin": 105000, "salaryMax": 150000},
+      {"title": "Incident Response Analyst", "level": 2, "salaryMin": 80000, "salaryMax": 115000},
+      {"title": "Malware Analyst", "level": 3, "salaryMin": 100000, "salaryMax": 145000},
+      {"title": "Security Engineer", "level": 3, "salaryMin": 115000, "salaryMax": 165000},
+      {"title": "SOC Analyst", "level": 1, "salaryMin": 55000, "salaryMax": 78000}
+    ]
+  },
+  {
+    "department": "Technology - Data Science",
+    "titles": [
+      {"title": "Chief Data Officer", "level": 5, "salaryMin": 195000, "salaryMax": 300000},
+      {"title": "Director of Data Science", "level": 4, "salaryMin": 160000, "salaryMax": 235000},
+      {"title": "Senior Data Scientist", "level": 3, "salaryMin": 125000, "salaryMax": 180000},
+      {"title": "Data Scientist", "level": 2, "salaryMin": 90000, "salaryMax": 135000},
+      {"title": "Machine Learning Engineer", "level": 3, "salaryMin": 130000, "salaryMax": 190000},
+      {"title": "Data Engineer", "level": 2, "salaryMin": 95000, "salaryMax": 140000},
+      {"title": "Data Analyst", "level": 2, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "AI Research Scientist", "level": 4, "salaryMin": 160000, "salaryMax": 250000}
+    ]
+  },
+  {
+    "department": "Media - Broadcasting",
+    "titles": [
+      {"title": "News Director", "level": 4, "salaryMin": 110000, "salaryMax": 165000},
+      {"title": "Senior Correspondent", "level": 3, "salaryMin": 85000, "salaryMax": 125000},
+      {"title": "Reporter", "level": 2, "salaryMin": 48000, "salaryMax": 72000},
+      {"title": "News Anchor", "level": 3, "salaryMin": 95000, "salaryMax": 180000},
+      {"title": "Investigative Journalist", "level": 3, "salaryMin": 72000, "salaryMax": 110000},
+      {"title": "Camera Operator", "level": 1, "salaryMin": 38000, "salaryMax": 55000},
+      {"title": "Producer", "level": 3, "salaryMin": 75000, "salaryMax": 115000},
+      {"title": "Editor", "level": 2, "salaryMin": 52000, "salaryMax": 78000},
+      {"title": "Social Media Manager", "level": 2, "salaryMin": 48000, "salaryMax": 72000}
+    ]
+  },
+  {
+    "department": "Media - Publishing",
+    "titles": [
+      {"title": "Editor-in-Chief", "level": 4, "salaryMin": 105000, "salaryMax": 160000},
+      {"title": "Managing Editor", "level": 3, "salaryMin": 78000, "salaryMax": 115000},
+      {"title": "Senior Writer", "level": 3, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Staff Writer", "level": 2, "salaryMin": 45000, "salaryMax": 68000},
+      {"title": "Copy Editor", "level": 2, "salaryMin": 42000, "salaryMax": 62000},
+      {"title": "Photographer", "level": 2, "salaryMin": 40000, "salaryMax": 65000},
+      {"title": "Graphic Designer", "level": 2, "salaryMin": 48000, "salaryMax": 72000}
+    ]
+  },
+  {
+    "department": "Education - Higher Education",
+    "titles": [
+      {"title": "University President", "level": 5, "salaryMin": 220000, "salaryMax": 400000},
+      {"title": "Provost", "level": 5, "salaryMin": 180000, "salaryMax": 300000},
+      {"title": "Dean", "level": 4, "salaryMin": 140000, "salaryMax": 210000},
+      {"title": "Department Chair", "level": 4, "salaryMin": 120000, "salaryMax": 175000},
+      {"title": "Professor", "level": 3, "salaryMin": 95000, "salaryMax": 155000},
+      {"title": "Associate Professor", "level": 3, "salaryMin": 78000, "salaryMax": 120000},
+      {"title": "Assistant Professor", "level": 2, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Lecturer", "level": 2, "salaryMin": 50000, "salaryMax": 75000},
+      {"title": "Research Associate", "level": 2, "salaryMin": 55000, "salaryMax": 82000},
+      {"title": "Teaching Assistant", "level": 1, "salaryMin": 28000, "salaryMax": 42000},
+      {"title": "Academic Advisor", "level": 2, "salaryMin": 45000, "salaryMax": 65000}
+    ]
+  },
+  {
+    "department": "Education - Primary and Secondary",
+    "titles": [
+      {"title": "School Principal", "level": 4, "salaryMin": 85000, "salaryMax": 135000},
+      {"title": "Vice Principal", "level": 3, "salaryMin": 72000, "salaryMax": 105000},
+      {"title": "Senior Teacher", "level": 3, "salaryMin": 58000, "salaryMax": 82000},
+      {"title": "Teacher", "level": 2, "salaryMin": 42000, "salaryMax": 65000},
+      {"title": "School Counselor", "level": 2, "salaryMin": 48000, "salaryMax": 72000},
+      {"title": "Librarian", "level": 2, "salaryMin": 40000, "salaryMax": 58000},
+      {"title": "Teaching Aide", "level": 1, "salaryMin": 25000, "salaryMax": 35000}
+    ]
+  },
+  {
+    "department": "Healthcare - Hospital",
+    "titles": [
+      {"title": "Chief Medical Officer", "level": 5, "salaryMin": 280000, "salaryMax": 450000},
+      {"title": "Hospital Administrator", "level": 5, "salaryMin": 180000, "salaryMax": 280000},
+      {"title": "Department Head", "level": 4, "salaryMin": 200000, "salaryMax": 350000},
+      {"title": "Attending Physician", "level": 3, "salaryMin": 180000, "salaryMax": 300000},
+      {"title": "Surgeon", "level": 4, "salaryMin": 250000, "salaryMax": 420000},
+      {"title": "Resident Physician", "level": 2, "salaryMin": 58000, "salaryMax": 78000},
+      {"title": "Registered Nurse", "level": 2, "salaryMin": 60000, "salaryMax": 92000},
+      {"title": "Nurse Practitioner", "level": 3, "salaryMin": 95000, "salaryMax": 135000},
+      {"title": "Pharmacist", "level": 3, "salaryMin": 105000, "salaryMax": 145000},
+      {"title": "Medical Technician", "level": 2, "salaryMin": 45000, "salaryMax": 65000},
+      {"title": "Emergency Medical Technician", "level": 1, "salaryMin": 35000, "salaryMax": 52000},
+      {"title": "Radiologist", "level": 4, "salaryMin": 280000, "salaryMax": 400000},
+      {"title": "Anesthesiologist", "level": 4, "salaryMin": 300000, "salaryMax": 430000}
+    ]
+  },
+  {
+    "department": "Healthcare - Research",
+    "titles": [
+      {"title": "Director of Research", "level": 5, "salaryMin": 175000, "salaryMax": 260000},
+      {"title": "Principal Investigator", "level": 4, "salaryMin": 130000, "salaryMax": 195000},
+      {"title": "Senior Research Scientist", "level": 3, "salaryMin": 100000, "salaryMax": 150000},
+      {"title": "Research Scientist", "level": 2, "salaryMin": 75000, "salaryMax": 110000},
+      {"title": "Lab Technician", "level": 1, "salaryMin": 38000, "salaryMax": 55000},
+      {"title": "Clinical Trial Coordinator", "level": 2, "salaryMin": 55000, "salaryMax": 78000},
+      {"title": "Biostatistician", "level": 3, "salaryMin": 95000, "salaryMax": 135000}
+    ]
+  },
+  {
+    "department": "Retail - Corporate",
+    "titles": [
+      {"title": "Chief Executive Officer", "level": 5, "salaryMin": 200000, "salaryMax": 500000},
+      {"title": "Chief Operating Officer", "level": 5, "salaryMin": 180000, "salaryMax": 350000},
+      {"title": "Regional Director", "level": 4, "salaryMin": 120000, "salaryMax": 180000},
+      {"title": "District Manager", "level": 3, "salaryMin": 82000, "salaryMax": 120000},
+      {"title": "Store Manager", "level": 3, "salaryMin": 55000, "salaryMax": 85000},
+      {"title": "Assistant Manager", "level": 2, "salaryMin": 38000, "salaryMax": 55000},
+      {"title": "Merchandising Manager", "level": 3, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Supply Chain Analyst", "level": 2, "salaryMin": 58000, "salaryMax": 82000},
+      {"title": "Marketing Coordinator", "level": 2, "salaryMin": 48000, "salaryMax": 68000},
+      {"title": "Sales Associate", "level": 1, "salaryMin": 25000, "salaryMax": 38000},
+      {"title": "Cashier", "level": 1, "salaryMin": 22000, "salaryMax": 32000}
+    ]
+  },
+  {
+    "department": "Finance - Banking",
+    "titles": [
+      {"title": "Chief Financial Officer", "level": 5, "salaryMin": 220000, "salaryMax": 400000},
+      {"title": "Managing Director", "level": 5, "salaryMin": 200000, "salaryMax": 380000},
+      {"title": "Vice President", "level": 4, "salaryMin": 140000, "salaryMax": 220000},
+      {"title": "Senior Financial Analyst", "level": 3, "salaryMin": 95000, "salaryMax": 140000},
+      {"title": "Financial Analyst", "level": 2, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Portfolio Manager", "level": 4, "salaryMin": 130000, "salaryMax": 250000},
+      {"title": "Risk Analyst", "level": 2, "salaryMin": 70000, "salaryMax": 100000},
+      {"title": "Compliance Officer", "level": 3, "salaryMin": 88000, "salaryMax": 130000},
+      {"title": "Loan Officer", "level": 2, "salaryMin": 52000, "salaryMax": 78000},
+      {"title": "Bank Teller", "level": 1, "salaryMin": 28000, "salaryMax": 40000}
+    ]
+  },
+  {
+    "department": "Legal",
+    "titles": [
+      {"title": "Managing Partner", "level": 5, "salaryMin": 250000, "salaryMax": 500000},
+      {"title": "Senior Partner", "level": 4, "salaryMin": 200000, "salaryMax": 380000},
+      {"title": "Partner", "level": 4, "salaryMin": 160000, "salaryMax": 300000},
+      {"title": "Senior Associate", "level": 3, "salaryMin": 120000, "salaryMax": 190000},
+      {"title": "Associate Attorney", "level": 2, "salaryMin": 85000, "salaryMax": 145000},
+      {"title": "Junior Associate", "level": 2, "salaryMin": 70000, "salaryMax": 100000},
+      {"title": "Paralegal", "level": 1, "salaryMin": 42000, "salaryMax": 62000},
+      {"title": "Legal Secretary", "level": 1, "salaryMin": 35000, "salaryMax": 52000},
+      {"title": "Public Defender", "level": 3, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Prosecutor", "level": 3, "salaryMin": 72000, "salaryMax": 110000}
+    ]
+  },
+  {
+    "department": "Transportation - Aviation",
+    "titles": [
+      {"title": "Airline CEO", "level": 5, "salaryMin": 220000, "salaryMax": 450000},
+      {"title": "Chief Pilot", "level": 4, "salaryMin": 180000, "salaryMax": 280000},
+      {"title": "Senior Captain", "level": 3, "salaryMin": 150000, "salaryMax": 230000},
+      {"title": "First Officer", "level": 2, "salaryMin": 85000, "salaryMax": 140000},
+      {"title": "Flight Engineer", "level": 2, "salaryMin": 78000, "salaryMax": 115000},
+      {"title": "Air Traffic Controller", "level": 3, "salaryMin": 95000, "salaryMax": 145000},
+      {"title": "Aircraft Mechanic", "level": 2, "salaryMin": 55000, "salaryMax": 82000},
+      {"title": "Flight Attendant", "level": 1, "salaryMin": 35000, "salaryMax": 58000},
+      {"title": "Ground Operations Supervisor", "level": 2, "salaryMin": 48000, "salaryMax": 68000}
+    ]
+  },
+  {
+    "department": "Construction and Engineering",
+    "titles": [
+      {"title": "Chief Engineer", "level": 5, "salaryMin": 160000, "salaryMax": 240000},
+      {"title": "Project Director", "level": 4, "salaryMin": 130000, "salaryMax": 190000},
+      {"title": "Senior Project Manager", "level": 3, "salaryMin": 100000, "salaryMax": 145000},
+      {"title": "Project Manager", "level": 3, "salaryMin": 82000, "salaryMax": 120000},
+      {"title": "Civil Engineer", "level": 3, "salaryMin": 78000, "salaryMax": 115000},
+      {"title": "Structural Engineer", "level": 3, "salaryMin": 80000, "salaryMax": 118000},
+      {"title": "Site Supervisor", "level": 2, "salaryMin": 58000, "salaryMax": 82000},
+      {"title": "Surveyor", "level": 2, "salaryMin": 52000, "salaryMax": 75000},
+      {"title": "Construction Worker", "level": 1, "salaryMin": 32000, "salaryMax": 50000},
+      {"title": "Electrician", "level": 2, "salaryMin": 45000, "salaryMax": 72000},
+      {"title": "Plumber", "level": 2, "salaryMin": 42000, "salaryMax": 68000}
+    ]
+  },
+  {
+    "department": "Energy",
+    "titles": [
+      {"title": "VP of Operations", "level": 5, "salaryMin": 190000, "salaryMax": 300000},
+      {"title": "Plant Manager", "level": 4, "salaryMin": 130000, "salaryMax": 185000},
+      {"title": "Senior Engineer", "level": 3, "salaryMin": 105000, "salaryMax": 150000},
+      {"title": "Operations Engineer", "level": 2, "salaryMin": 78000, "salaryMax": 110000},
+      {"title": "Power Plant Operator", "level": 2, "salaryMin": 60000, "salaryMax": 85000},
+      {"title": "Environmental Compliance Specialist", "level": 2, "salaryMin": 62000, "salaryMax": 88000},
+      {"title": "Field Technician", "level": 1, "salaryMin": 42000, "salaryMax": 62000},
+      {"title": "Safety Inspector", "level": 2, "salaryMin": 55000, "salaryMax": 78000}
+    ]
+  },
+  {
+    "department": "Agriculture",
+    "titles": [
+      {"title": "Farm Owner/Operator", "level": 4, "salaryMin": 65000, "salaryMax": 180000},
+      {"title": "Agricultural Manager", "level": 3, "salaryMin": 58000, "salaryMax": 95000},
+      {"title": "Agronomist", "level": 3, "salaryMin": 62000, "salaryMax": 92000},
+      {"title": "Veterinarian", "level": 3, "salaryMin": 85000, "salaryMax": 135000},
+      {"title": "Farm Supervisor", "level": 2, "salaryMin": 38000, "salaryMax": 58000},
+      {"title": "Agricultural Technician", "level": 1, "salaryMin": 30000, "salaryMax": 45000},
+      {"title": "Farm Worker", "level": 1, "salaryMin": 24000, "salaryMax": 35000}
+    ]
+  },
+  {
+    "department": "Hospitality",
+    "titles": [
+      {"title": "General Manager", "level": 4, "salaryMin": 85000, "salaryMax": 140000},
+      {"title": "Hotel Manager", "level": 3, "salaryMin": 62000, "salaryMax": 95000},
+      {"title": "Front Desk Manager", "level": 2, "salaryMin": 38000, "salaryMax": 55000},
+      {"title": "Executive Chef", "level": 3, "salaryMin": 65000, "salaryMax": 110000},
+      {"title": "Sous Chef", "level": 2, "salaryMin": 42000, "salaryMax": 62000},
+      {"title": "Restaurant Manager", "level": 3, "salaryMin": 48000, "salaryMax": 75000},
+      {"title": "Concierge", "level": 1, "salaryMin": 30000, "salaryMax": 45000},
+      {"title": "Bartender", "level": 1, "salaryMin": 25000, "salaryMax": 40000},
+      {"title": "Event Coordinator", "level": 2, "salaryMin": 42000, "salaryMax": 65000}
+    ]
+  },
+  {
+    "department": "Law Enforcement",
+    "titles": [
+      {"title": "Police Commissioner", "level": 5, "salaryMin": 150000, "salaryMax": 220000},
+      {"title": "Police Chief", "level": 5, "salaryMin": 130000, "salaryMax": 195000},
+      {"title": "Deputy Chief", "level": 4, "salaryMin": 110000, "salaryMax": 160000},
+      {"title": "Captain", "level": 3, "salaryMin": 88000, "salaryMax": 125000},
+      {"title": "Detective", "level": 3, "salaryMin": 72000, "salaryMax": 105000},
+      {"title": "Sergeant", "level": 2, "salaryMin": 62000, "salaryMax": 88000},
+      {"title": "Police Officer", "level": 2, "salaryMin": 48000, "salaryMax": 72000},
+      {"title": "Crime Scene Investigator", "level": 2, "salaryMin": 55000, "salaryMax": 78000},
+      {"title": "Forensic Analyst", "level": 3, "salaryMin": 65000, "salaryMax": 95000},
+      {"title": "Patrol Officer", "level": 1, "salaryMin": 42000, "salaryMax": 60000},
+      {"title": "Dispatcher", "level": 1, "salaryMin": 32000, "salaryMax": 48000}
+    ]
+  }
+]

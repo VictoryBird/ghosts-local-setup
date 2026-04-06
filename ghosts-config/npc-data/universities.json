@@ -1,0 +1,92 @@
+[
+  {
+    "name": "University of Elaris",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Valdoria Institute of Technology",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Silicon Coast University",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Port Callisto State University",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Meridia Bay College",
+    "country": "Valdoria",
+    "type": "private"
+  },
+  {
+    "name": "Westport University",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Sentinel Military Academy",
+    "country": "Valdoria",
+    "type": "public"
+  },
+  {
+    "name": "Northfield School of Business",
+    "country": "Valdoria",
+    "type": "private"
+  },
+  {
+    "name": "Callisto College of Engineering",
+    "country": "Valdoria",
+    "type": "private"
+  },
+  {
+    "name": "Oakridge Liberal Arts College",
+    "country": "Valdoria",
+    "type": "private"
+  },
+  {
+    "name": "Volgrad State University",
+    "country": "Krasnovia",
+    "type": "public"
+  },
+  {
+    "name": "Krasnovia Technical Institute",
+    "country": "Krasnovia",
+    "type": "public"
+  },
+  {
+    "name": "Novokrest Academy of Sciences",
+    "country": "Krasnovia",
+    "type": "public"
+  },
+  {
+    "name": "Kethara University",
+    "country": "Tarvek",
+    "type": "public"
+  },
+  {
+    "name": "Tarvek National Polytechnic",
+    "country": "Tarvek",
+    "type": "public"
+  },
+  {
+    "name": "University of New Harford",
+    "country": "Arventa",
+    "type": "public"
+  },
+  {
+    "name": "Bayview Institute of Technology",
+    "country": "Arventa",
+    "type": "private"
+  },
+  {
+    "name": "Columbia Heights University",
+    "country": "Arventa",
+    "type": "public"
+  }
+]
