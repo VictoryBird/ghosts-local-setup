@@ -102,10 +102,17 @@ declare -A ACCOUNT_TOKENS
 
 # Helper: create a Mastodon account and get its API token
 # Uses Rails console directly to bypass email domain validation
+# Sets _RETURN_ID and _RETURN_TOKEN globals (avoids subshell variable loss)
 create_account_and_token() {
     local username="$1"
     local email="$2"
     local display_name="${3:-}"
+
+    _RETURN_ID=""
+    _RETURN_TOKEN=""
+
+    # Escape single quotes for Ruby string safety
+    local safe_display_name="${display_name//\'/\\\'}"
 
     # Create account + generate token in a single Rails call
     local RESULT
@@ -113,12 +120,10 @@ create_account_and_token() {
 account = Account.find_local('${username}')
 if account && account.user
   STDERR.puts 'ALREADY_EXISTS'
-  # Still generate token for existing account
   user = account.user
 else
-  # Create account and user via Rails, bypassing email validation
   account = Account.new(username: '${username}')
-  account.display_name = '${display_name}'
+  account.display_name = '${safe_display_name}'
   account.save!(validate: false)
 
   user = User.new(
@@ -133,13 +138,11 @@ else
   STDERR.puts 'CREATED'
 end
 
-# Ensure OAuth application exists
 app = Doorkeeper::Application.find_or_create_by!(name: 'GHOSTS NPC Automation') do |a|
   a.redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
   a.scopes = 'read write follow push'
 end
 
-# Generate access token
 token = Doorkeeper::AccessToken.find_or_create_for(
   application: app,
   resource_owner: user,
@@ -162,9 +165,8 @@ puts \"#{account.id}|#{token.token}\"
         return 1
     fi
 
-    local ACCOUNT_ID TOKEN
-    ACCOUNT_ID=$(echo "${DATA_LINE}" | cut -d'|' -f1)
-    TOKEN=$(echo "${DATA_LINE}" | cut -d'|' -f2)
+    _RETURN_ID=$(echo "${DATA_LINE}" | cut -d'|' -f1)
+    _RETURN_TOKEN=$(echo "${DATA_LINE}" | cut -d'|' -f2)
 
     if echo "${STDERR_LINE}" | grep -q "ALREADY_EXISTS"; then
         SKIPPED=$((SKIPPED + 1))
@@ -172,10 +174,8 @@ puts \"#{account.id}|#{token.token}\"
         CREATED=$((CREATED + 1))
     fi
 
-    ACCOUNT_IDS["${username}"]="${ACCOUNT_ID}"
-    ACCOUNT_TOKENS["${username}"]="${TOKEN}"
-
-    echo "${ACCOUNT_ID}" # Return account ID
+    ACCOUNT_IDS["${username}"]="${_RETURN_ID}"
+    ACCOUNT_TOKENS["${username}"]="${_RETURN_TOKEN}"
 }
 
 # Helper: derive username from NPC name
@@ -194,7 +194,7 @@ echo "  --- Creating official/institutional accounts ---"
 for acct_name in "${!OFFICIAL_ACCOUNTS[@]}"; do
     local_email="${OFFICIAL_ACCOUNTS[${acct_name}]}"
     echo "  Creating: ${acct_name} (${local_email})"
-    ACCT_ID=$(create_account_and_token "${acct_name}" "${local_email}" "${acct_name}") || true
+    create_account_and_token "${acct_name}" "${local_email}" "${acct_name}" || true
 done
 
 echo ""
@@ -224,8 +224,9 @@ for i in $(seq 0 $((NPC_COUNT - 1))); do
 
     echo "  [$(( i + 1 ))/${NPC_COUNT}] ${DISPLAY_NAME} -> @${USERNAME} (${COUNTRY}/${ROLE})"
 
-    ACCT_ID=$(create_account_and_token "${USERNAME}" "${EMAIL}" "${DISPLAY_NAME}") || true
-    TOKEN="${ACCOUNT_TOKENS[${USERNAME}]:-}"
+    create_account_and_token "${USERNAME}" "${EMAIL}" "${DISPLAY_NAME}" || true
+    ACCT_ID="${_RETURN_ID}"
+    TOKEN="${_RETURN_TOKEN}"
 
     # Append to JSON
     if [[ "${FIRST_ENTRY}" == "true" ]]; then
