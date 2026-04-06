@@ -53,7 +53,7 @@ _maybe_sudo_docker() {
 # -----------------------------------------------------------------------------
 # 1. System packages
 # -----------------------------------------------------------------------------
-echo "[1/8] Installing system dependencies..."
+echo "[1/11] Installing system dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
     curl wget git unzip ca-certificates gnupg lsb-release openssl jq
@@ -62,9 +62,9 @@ sudo apt-get install -y -qq \
 # 2. Docker
 # -----------------------------------------------------------------------------
 if command -v docker &>/dev/null; then
-    echo "[2/8] Docker already installed: $(docker --version)"
+    echo "[2/11] Docker already installed: $(docker --version)"
 else
-    echo "[2/8] Installing Docker..."
+    echo "[2/11] Installing Docker..."
     sudo install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -90,9 +90,9 @@ _maybe_sudo_docker
 # 3. Ollama
 # -----------------------------------------------------------------------------
 if command -v ollama &>/dev/null; then
-    echo "[3/8] Ollama already installed: $(ollama --version)"
+    echo "[3/11] Ollama already installed: $(ollama --version)"
 else
-    echo "[3/8] Installing Ollama..."
+    echo "[3/11] Installing Ollama..."
     curl -fsSL https://ollama.com/install.sh | sh
 fi
 
@@ -100,6 +100,19 @@ if ! systemctl is-active --quiet ollama 2>/dev/null; then
     echo "  -> Starting Ollama service..."
     sudo systemctl enable ollama
     sudo systemctl start ollama
+    sleep 3
+fi
+
+# Ensure Ollama listens on all interfaces (needed for Docker containers)
+if ! grep -q "OLLAMA_HOST=0.0.0.0" /etc/systemd/system/ollama.service.d/override.conf 2>/dev/null; then
+    echo "  -> Configuring Ollama to listen on all interfaces..."
+    sudo mkdir -p /etc/systemd/system/ollama.service.d
+    sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null <<OLLAMAEOF
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0"
+OLLAMAEOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart ollama
     sleep 3
 fi
 
@@ -138,7 +151,7 @@ echo "  -> Ollama models ready."
 # -----------------------------------------------------------------------------
 # 4. Clone GHOSTS source
 # -----------------------------------------------------------------------------
-echo "[4/8] Cloning GHOSTS source..."
+echo "[4/11] Cloning GHOSTS source..."
 mkdir -p "$GHOSTS_DIR"
 cd "$GHOSTS_DIR"
 
@@ -152,7 +165,7 @@ fi
 # -----------------------------------------------------------------------------
 # 5. Create unified docker-compose.yml
 # -----------------------------------------------------------------------------
-echo "[5/8] Creating unified docker-compose configuration..."
+echo "[5/11] Creating unified docker-compose configuration..."
 
 HOST_IP=$(hostname -I | awk '{print $1}')
 
@@ -288,7 +301,7 @@ COMPOSEOF
 # -----------------------------------------------------------------------------
 # 6. Create configuration files
 # -----------------------------------------------------------------------------
-echo "[6/8] Creating configuration files..."
+echo "[6/11] Creating configuration files..."
 
 mkdir -p "$GHOSTS_DIR/config"
 mkdir -p "$GHOSTS_DIR/content/social"
@@ -749,7 +762,7 @@ TIMELINEOF
 # -----------------------------------------------------------------------------
 # 7. Build Docker images from source
 # -----------------------------------------------------------------------------
-echo "[7/8] Building Docker images from source (this may take several minutes)..."
+echo "[7/11] Building Docker images from source (this may take several minutes)..."
 cd "$GHOSTS_DIR"
 
 # Pull base images (runtime + build SDKs for air-gapped rebuild)
@@ -786,7 +799,7 @@ $COMPOSE_CMD build ghosts-pandora
 # -----------------------------------------------------------------------------
 # 8. Start services
 # -----------------------------------------------------------------------------
-echo "[8/8] Starting all services..."
+echo "[8/11] Starting all services..."
 $COMPOSE_CMD up -d
 
 echo "  -> Waiting for services to initialize..."
@@ -826,6 +839,86 @@ echo "  -> Seeding initial social media posts..."
 sleep 3
 curl -sf -X POST "http://localhost:${PORT_PANDORA}/api/admin/generate/10" > /dev/null 2>&1 || true
 
+# -----------------------------------------------------------------------------
+# 9. Clone config repo and setup Ollama role-specific models
+# -----------------------------------------------------------------------------
+echo "[9/11] Setting up cognitive warfare configuration..."
+cd "$GHOSTS_DIR"
+
+if [ -d "config-repo/.git" ]; then
+    echo "  -> Config repo already exists, pulling latest..."
+    cd config-repo && git pull && cd ..
+else
+    echo "  -> Cloning config repo..."
+    git clone https://github.com/VictoryBird/ghosts-local-setup.git config-repo
+fi
+
+# Create role-specific Ollama model aliases
+echo "  -> Creating role-specific Ollama model aliases..."
+if [ -f "config-repo/ghosts-config/ollama-models/setup-ollama-models.sh" ]; then
+    chmod +x config-repo/ghosts-config/ollama-models/setup-ollama-models.sh
+    cd config-repo/ghosts-config/ollama-models
+    ./setup-ollama-models.sh
+    cd "$GHOSTS_DIR"
+fi
+
+# -----------------------------------------------------------------------------
+# 10. Generate 130 NPCs
+# -----------------------------------------------------------------------------
+echo "[10/11] Generating 130 NPCs..."
+
+# Check if NPCs already exist
+NPC_COUNT=$(curl -sf "http://localhost:${PORT_API}/api/npcs/list" 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+if [ "$NPC_COUNT" -ge 120 ]; then
+    echo "  -> ${NPC_COUNT} NPCs already exist, skipping generation."
+else
+    if [ "$NPC_COUNT" -gt 0 ]; then
+        echo "  -> Deleting ${NPC_COUNT} existing NPCs..."
+        curl -sf "http://localhost:${PORT_API}/api/npcs/list" 2>/dev/null | \
+            python3 -c "import sys,json; [print(n['id']) for n in json.load(sys.stdin)]" 2>/dev/null | \
+            while read id; do
+                curl -sf -X DELETE "http://localhost:${PORT_API}/api/npcs/$id" > /dev/null 2>&1
+            done
+    fi
+
+    echo "  -> Running NPC generation script..."
+    chmod +x config-repo/ghosts-config/scripts/generate-npcs.sh
+    config-repo/ghosts-config/scripts/generate-npcs.sh "http://localhost:${PORT_API}"
+
+    # Update Campaign/Enclave/Team via DB
+    echo "  -> Setting Campaign/Enclave/Team for all NPCs..."
+    $DOCKER_CMD exec ghosts-postgres psql -U ghosts -d ghosts -c "
+    UPDATE npcs SET
+      campaign = 'Meridia2026',
+      enclave = CASE
+        WHEN npcprofile->'attributes'->>'country' = 'valdoria' THEN 'Valdoria'
+        WHEN npcprofile->'attributes'->>'country' = 'krasnovia' THEN 'Krasnovia'
+        WHEN npcprofile->'attributes'->>'country' = 'tarvek' THEN 'Tarvek'
+        WHEN npcprofile->'attributes'->>'country' = 'arventa' THEN 'Arventa'
+        ELSE 'Unknown'
+      END,
+      team = CASE
+        WHEN npcprofile->'attributes'->>'role' = 'official' THEN 'Government'
+        WHEN npcprofile->'attributes'->>'role' = 'military' THEN 'Military'
+        WHEN npcprofile->'attributes'->>'role' = 'citizen' THEN 'Citizen'
+        WHEN npcprofile->'attributes'->>'role' = 'media' THEN 'Media'
+        WHEN npcprofile->'attributes'->>'role' = 'disguised' THEN 'DisguisedOps'
+        WHEN npcprofile->'attributes'->>'role' = 'bot' THEN 'BotNetwork'
+        WHEN npcprofile->'attributes'->>'role' = 'gorgon' THEN 'GORGON'
+        WHEN npcprofile->'attributes'->>'role' = 'liaison' THEN 'Government'
+        ELSE 'Other'
+      END;
+    " 2>/dev/null && echo "  -> Campaign/Enclave/Team updated." || echo "  -> WARNING: DB update failed."
+fi
+
+# -----------------------------------------------------------------------------
+# 11. Final summary
+# -----------------------------------------------------------------------------
+echo "[11/11] Final checks..."
+NPC_FINAL=$(curl -sf "http://localhost:${PORT_API}/api/npcs/list" 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
+echo "  -> NPCs created: ${NPC_FINAL}"
+
 echo ""
 echo "============================================"
 echo "  GHOSTS Installation Complete!"
@@ -861,9 +954,18 @@ echo "    timelines/document-work.json     — Document creation"
 echo "    timelines/ssh-activity.json      — SSH activity"
 echo "    timelines/workday-combined.json  — Realistic workday pattern"
 echo ""
-echo "  n8n Workflow Templates:"
-echo "    ${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows/"
-echo "    Import via n8n UI at http://${HOST_IP}:${PORT_N8N}"
+echo "  NPC Configuration:"
+echo "    NPCs: ${NPC_FINAL} created (Meridia2026 scenario)"
+echo "    Ollama models: role-specific aliases ready"
+echo ""
+echo "  n8n Workflow Setup (MANUAL — import via n8n UI):"
+echo "    1. Open http://${HOST_IP}:${PORT_N8N}"
+echo "    2. Create Ollama credential: Base URL = http://${HOST_IP}:11434"
+echo "    3. Import workflows from: ${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows/"
+echo "       Order: Connections → Preferences → Social Graph → Belief → Post to Social Media → Real-time Chat"
+echo "    4. In each workflow: change host.docker.internal → ${HOST_IP}"
+echo "    5. In each workflow: change Ollama model mistral:7b → qwen3.5:9b"
+echo "    6. Set Ollama credential in all Ollama nodes"
 echo ""
 echo "  ─── Air-Gapped Deployment ───"
 echo ""
