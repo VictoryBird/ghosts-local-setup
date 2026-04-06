@@ -752,11 +752,17 @@ TIMELINEOF
 echo "[7/8] Building Docker images from source (this may take several minutes)..."
 cd "$GHOSTS_DIR"
 
-# Pull base images first
+# Pull base images (runtime + build SDKs for air-gapped rebuild)
 echo "  -> Pulling base images..."
 $DOCKER_CMD pull postgres:16.8
 $DOCKER_CMD pull docker.n8n.io/n8nio/n8n:latest
 $DOCKER_CMD pull grafana/grafana
+
+echo "  -> Pulling build SDK images (for air-gapped source rebuild)..."
+$DOCKER_CMD pull mcr.microsoft.com/dotnet/sdk:10.0
+$DOCKER_CMD pull mcr.microsoft.com/dotnet/aspnet:10.0
+$DOCKER_CMD pull node:22-alpine
+$DOCKER_CMD pull nginx:alpine
 
 # Patch Frontend Dockerfile: fix Angular peer dependency conflict
 FRONTEND_DOCKERFILE="$GHOSTS_DIR/GHOSTS/src/Ghosts.Frontend/Dockerfile"
