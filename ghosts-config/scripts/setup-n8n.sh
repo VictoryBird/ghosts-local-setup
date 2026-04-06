@@ -128,9 +128,15 @@ import_workflow() {
 
     echo "  -> Importing: $name"
 
-    # Replace host.docker.internal with actual host IP in the workflow
+    # Replace host.docker.internal with actual host IP, strip read-only fields
     local temp_file=$(mktemp)
-    sed "s/host\.docker\.internal/${HOST_IP}/g" "$file" > "$temp_file"
+    cat "$file" | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+keep={'name','nodes','connections','settings'}
+d={k:v for k,v in d.items() if k in keep}
+print(json.dumps(d))
+" | sed "s/host\.docker\.internal/${HOST_IP}/g" > "$temp_file"
 
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
         -X POST \
