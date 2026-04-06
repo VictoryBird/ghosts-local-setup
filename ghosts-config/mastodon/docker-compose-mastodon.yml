@@ -1,20 +1,15 @@
 ###############################################################################
 # docker-compose-mastodon.yml
 #
-# Standalone Mastodon stack for GHOSTS NPC Framework cyber exercises.
-# Shares PostgreSQL with the main GHOSTS stack via the external network.
+# Mastodon for GHOSTS NPC Framework — Air-gapped cyber exercise SNS
+# Shares PostgreSQL with the main GHOSTS stack via external network.
 #
 # Usage:
+#   cd ~/ghosts/config-repo/ghosts-config/mastodon
 #   docker compose -f docker-compose-mastodon.yml up -d
 #
-# Prerequisites:
-#   - The main GHOSTS stack must be running (provides ghosts-postgres + network)
-#   - .env.mastodon must exist in this directory (created by setup-mastodon.sh)
-#   - The mastodon database must be created on ghosts-postgres
-#
-# Port mapping:
-#   8000 -> Mastodon web (replaces Pandora/Socializer)
-#   4000 -> Mastodon streaming API
+# Ports:
+#   8000 -> Mastodon web UI (replaces Pandora)
 ###############################################################################
 
 services:
@@ -38,6 +33,11 @@ services:
     container_name: mastodon-web
     restart: unless-stopped
     env_file: .env.mastodon
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
+      - BIND=0.0.0.0
+      - PORT=3000
     command: bundle exec puma -C config/puma.rb
     ports:
       - "8000:3000"
@@ -55,38 +55,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  mastodon-streaming:
-    image: ghcr.io/mastodon/mastodon:v4.3.7
-    container_name: mastodon-streaming
-    restart: unless-stopped
-    env_file: .env.mastodon
-    command: node ./streaming/index.js
-    ports:
-      - "4000:4000"
-    networks:
-      - mastodon-internal
-      - ghosts-external
-    depends_on:
-      mastodon-redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:4000/api/v1/streaming/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      start_period: 90s
 
   mastodon-sidekiq:
     image: ghcr.io/mastodon/mastodon:v4.3.7
     container_name: mastodon-sidekiq
     restart: unless-stopped
     env_file: .env.mastodon
+    environment:
+      - RAILS_ENV=production
+      - NODE_ENV=production
     command: bundle exec sidekiq
     networks:
       - mastodon-internal
@@ -96,20 +74,14 @@ services:
     depends_on:
       mastodon-redis:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-networks:
-  mastodon-internal:
-    driver: bridge
-  ghosts-external:
-    # The main GHOSTS docker-compose creates this network automatically.
-    # The default name is "{directory}_default" where {directory} is the
-    # folder containing the main docker-compose.yml.
-    # Adjust the name below to match your GHOSTS installation directory.
-    external: true
-    name: ghosts_default
 
 volumes:
   mastodon-redis:
   mastodon-system:
+
+networks:
+  mastodon-internal:
+    internal: true
+  ghosts-external:
+    name: ghosts_default
+    external: true
