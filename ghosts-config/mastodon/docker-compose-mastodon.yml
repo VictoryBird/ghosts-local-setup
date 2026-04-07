@@ -47,6 +47,7 @@ services:
     volumes:
       - mastodon-system:/opt/mastodon/public/system
       - ./rack_attack.rb:/opt/mastodon/config/initializers/rack_attack.rb:ro
+      - ./disable_ssl_and_hosts.rb:/opt/mastodon/config/initializers/zz_disable_ssl_and_hosts.rb:ro
     depends_on:
       mastodon-redis:
         condition: service_healthy
