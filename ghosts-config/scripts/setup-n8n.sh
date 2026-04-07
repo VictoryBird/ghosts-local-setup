@@ -6,23 +6,24 @@ set -euo pipefail
 #
 # This script:
 #   1. Waits for n8n to be ready
-#   2. Imports the Phase Trigger workflow via n8n API
-#   3. Prints instructions for manual workflow imports
+#   2. Builds NPC token map from npc_tokens.json
+#   3. Imports all workflows via n8n API (with IP/model/token substitution)
+#   4. Falls back to manual import instructions if no API key
 #
 # Prerequisites:
 #   - Docker Compose stack is running (docker compose up -d)
 #   - n8n initial account has been created via web UI
+#   - setup-mastodon-npcs.sh has been run (npc_tokens.json exists)
 #
 # Usage:
 #   ./setup-n8n.sh [N8N_API_KEY]
-#
-# The N8N_API_KEY can be generated in n8n UI:
-#   Settings > API > Create API Key
 # =============================================================================
 
 GHOSTS_DIR="${GHOSTS_DIR:-$HOME/ghosts}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKFLOW_DIR="$(cd "$SCRIPT_DIR/../n8n-workflows" && pwd)"
+MASTODON_DIR="$(cd "$SCRIPT_DIR/../mastodon" && pwd)"
+TOKEN_FILE="${MASTODON_DIR}/npc-data/npc_tokens.json"
 
 # Configuration
 N8N_HOST="${N8N_HOST:-localhost}"
@@ -39,15 +40,16 @@ echo "============================================"
 echo "  GHOSTS n8n Workflow Setup"
 echo "============================================"
 echo ""
-echo "  n8n URL:    ${N8N_BASE_URL}"
-echo "  Host IP:    ${HOST_IP}"
+echo "  n8n URL:      ${N8N_BASE_URL}"
+echo "  Host IP:      ${HOST_IP}"
 echo "  Workflow dir: ${WORKFLOW_DIR}"
+echo "  Token file:   ${TOKEN_FILE}"
 echo ""
 
 # -----------------------------------------------------------------------------
 # 1. Wait for n8n to be ready
 # -----------------------------------------------------------------------------
-echo "[1/3] Waiting for n8n to be ready..."
+echo "[1/4] Waiting for n8n to be ready..."
 
 MAX_RETRIES=30
 RETRY_INTERVAL=5
@@ -70,15 +72,57 @@ for i in $(seq 1 $MAX_RETRIES); do
 done
 
 # -----------------------------------------------------------------------------
-# 2. Check API key
+# 2. Build NPC token map
 # -----------------------------------------------------------------------------
 echo ""
-echo "[2/3] Checking n8n API access..."
+echo "[2/4] Building NPC token map..."
 
-if [ -z "$N8N_API_KEY" ]; then
-    echo ""
-    echo "  ============================================================"
-    echo "  n8n API Key가 설정되지 않았습니다."
+if [ -f "$TOKEN_FILE" ]; then
+    # Build a simplified { username: token } map for workflow injection
+    NPC_TOKEN_MAP=$(python3 -c "
+import json, sys
+with open('${TOKEN_FILE}') as f:
+    data = json.load(f)
+simple = {}
+for username, info in data.items():
+    if isinstance(info, dict) and 'token' in info:
+        simple[username] = info['token']
+    elif isinstance(info, str):
+        simple[username] = info
+print(json.dumps(simple))
+" 2>/dev/null || echo "{}")
+    TOKEN_COUNT=$(echo "$NPC_TOKEN_MAP" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+    echo "  -> Loaded ${TOKEN_COUNT} NPC tokens."
+else
+    echo "  [WARNING] Token file not found: ${TOKEN_FILE}"
+    echo "  -> Run setup-mastodon-npcs.sh first for Mastodon posting."
+    NPC_TOKEN_MAP="{}"
+fi
+
+# -----------------------------------------------------------------------------
+# 3. Check API key
+# -----------------------------------------------------------------------------
+echo ""
+echo "[3/4] Checking n8n API access..."
+
+SKIP_API_IMPORT=true
+
+if [ -n "$N8N_API_KEY" ]; then
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
+        "${N8N_API_URL}/workflows" 2>/dev/null || echo "000")
+
+    if [ "$HTTP_CODE" = "200" ]; then
+        echo "  -> API access confirmed (HTTP ${HTTP_CODE})"
+        SKIP_API_IMPORT=false
+    else
+        echo "  [WARNING] API access failed (HTTP ${HTTP_CODE})"
+    fi
+else
+    echo "  -> No API key provided."
+fi
+
+if [ "$SKIP_API_IMPORT" = "true" ]; then
     echo ""
     echo "  API를 통한 자동 임포트를 사용하려면:"
     echo "    1. 브라우저에서 ${N8N_BASE_URL} 접속"
@@ -86,57 +130,68 @@ if [ -z "$N8N_API_KEY" ]; then
     echo "    3. Settings > API > Create API Key"
     echo "    4. 아래 명령으로 다시 실행:"
     echo ""
-    echo "       N8N_API_KEY=<your-api-key> $0"
-    echo "       또는: $0 <your-api-key>"
+    echo "       $0 <your-api-key>"
     echo ""
-    echo "  ============================================================"
-    echo ""
-    echo "  -> API 키 없이 수동 임포트 안내로 진행합니다."
-    echo ""
-
-    # Skip to manual instructions
-    SKIP_API_IMPORT=true
-else
-    # Test API access
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-        -H "X-N8N-API-KEY: ${N8N_API_KEY}" \
-        "${N8N_API_URL}/workflows" 2>/dev/null || echo "000")
-
-    if [ "$HTTP_CODE" = "200" ]; then
-        echo "  -> API 접근 확인 완료 (HTTP ${HTTP_CODE})"
-        SKIP_API_IMPORT=false
-    else
-        echo "  [WARNING] API 접근 실패 (HTTP ${HTTP_CODE})"
-        echo "  API 키를 확인하세요. 수동 임포트 안내로 진행합니다."
-        SKIP_API_IMPORT=true
-    fi
 fi
 
 # -----------------------------------------------------------------------------
-# 3. Import workflows
+# 4. Import workflows
 # -----------------------------------------------------------------------------
-echo "[3/3] Importing workflows..."
+echo ""
+echo "[4/4] Importing workflows..."
 
+# Process a workflow JSON: replace placeholders, strip read-only fields, import
 import_workflow() {
     local file="$1"
-    local name=$(basename "$file" .json)
+    local name
+    name=$(basename "$file" .json)
 
     if [ ! -f "$file" ]; then
         echo "  [SKIP] File not found: $file"
         return 1
     fi
 
-    echo "  -> Importing: $name"
+    echo -n "  -> ${name} ... "
 
-    # Replace host.docker.internal with actual host IP, strip read-only fields
-    local temp_file=$(mktemp)
-    cat "$file" | python3 -c "
-import sys,json
-d=json.load(sys.stdin)
-keep={'name','nodes','connections','settings'}
-d={k:v for k,v in d.items() if k in keep}
+    # Process the workflow JSON:
+    # 1. Keep only importable fields (name, nodes, connections, settings)
+    # 2. Replace host.docker.internal with actual IP
+    # 3. Replace mistral:7b with qwen3.5:9b
+    # 4. Inject NPC token map
+    local temp_file
+    temp_file=$(mktemp)
+
+    python3 -c "
+import json, sys
+
+with open('${file}') as f:
+    d = json.load(f)
+
+# Keep only fields that n8n import API accepts
+keep = {'name', 'nodes', 'connections', 'settings'}
+d = {k: v for k, v in d.items() if k in keep}
+
+raw = json.dumps(d)
+
+# Replace placeholders
+raw = raw.replace('host.docker.internal', '${HOST_IP}')
+raw = raw.replace('mistral:7b', 'qwen3.5:9b')
+raw = raw.replace('mistral', 'qwen3.5:9b')
+
+# Inject NPC token map
+token_map = '${NPC_TOKEN_MAP}'
+raw = raw.replace('__NPC_TOKEN_MAP__', token_map)
+
+# Parse back to validate JSON
+d = json.loads(raw)
 print(json.dumps(d))
-" | sed "s/host\.docker\.internal/${HOST_IP}/g" > "$temp_file"
+" > "$temp_file" 2>/dev/null
+
+    if [ ! -s "$temp_file" ]; then
+        echo "FAILED (JSON processing error)"
+        rm -f "$temp_file"
+        return 1
+    fi
 
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
         -X POST \
@@ -148,78 +203,113 @@ print(json.dumps(d))
     rm -f "$temp_file"
 
     if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
-        echo "     OK (HTTP ${HTTP_CODE})"
+        echo "OK"
         return 0
     else
-        echo "     FAILED (HTTP ${HTTP_CODE})"
+        echo "FAILED (HTTP ${HTTP_CODE})"
         return 1
     fi
 }
 
-if [ "${SKIP_API_IMPORT:-false}" = "false" ]; then
-    echo ""
-    echo "  --- 인지전 전용 워크플로우 ---"
+IMPORTED=0
+FAILED=0
 
-    # Import phase trigger workflow
-    PHASE_TRIGGER="${WORKFLOW_DIR}/phase-trigger-workflow.json"
-    if [ -f "$PHASE_TRIGGER" ]; then
-        import_workflow "$PHASE_TRIGGER" && \
-            echo "     Phase Trigger webhook: ${N8N_BASE_URL}/webhook/phase-change" || true
-    fi
+if [ "$SKIP_API_IMPORT" = "false" ]; then
+    echo ""
+    echo "  --- Custom Meridia Workflows ---"
+
+    for wf in \
+        "${WORKFLOW_DIR}/GHOSTS-Post-to-Mastodon.json" \
+        "${WORKFLOW_DIR}/GHOSTS-Belief-Meridia.json" \
+        "${WORKFLOW_DIR}/GHOSTS-Social-Graph.json" \
+        "${WORKFLOW_DIR}/GHOSTS-Phase-Trigger.json" \
+        "${WORKFLOW_DIR}/GHOSTS-Timeline-Deploy.json"; do
+        if import_workflow "$wf"; then
+            IMPORTED=$((IMPORTED + 1))
+        else
+            FAILED=$((FAILED + 1))
+        fi
+    done
 
     echo ""
-    echo "  --- GHOSTS 기본 워크플로우 (수동 임포트 필요) ---"
+    echo "  --- GHOSTS 기본 워크플로우 ---"
+
+    GHOSTS_WF_DIR="${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows"
+    for wf in \
+        "${GHOSTS_WF_DIR}/GHOSTS Connections.json" \
+        "${GHOSTS_WF_DIR}/GHOSTS Preferences.json"; do
+        if [ -f "$wf" ]; then
+            if import_workflow "$wf"; then
+                IMPORTED=$((IMPORTED + 1))
+            else
+                FAILED=$((FAILED + 1))
+            fi
+        else
+            echo "  [SKIP] Not found: $wf"
+        fi
+    done
+
     echo ""
+    echo "  Imported: ${IMPORTED}  Failed: ${FAILED}"
 fi
 
 # -----------------------------------------------------------------------------
-# Print manual import instructions
+# Print summary and instructions
 # -----------------------------------------------------------------------------
-echo "============================================"
-echo "  수동 워크플로우 임포트 안내"
-echo "============================================"
-echo ""
-echo "  1. 브라우저에서 n8n 접속: ${N8N_BASE_URL}"
-echo ""
-echo "  2. GHOSTS 기본 워크플로우 임포트:"
-echo "     파일 위치: ${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows/"
-echo ""
-echo "     Workflows > ... > Import from File 에서 아래 파일 선택:"
-echo ""
-echo "     [1] GHOSTS Post to Social Media.json  (AI 소셜 포스트 생성)"
-echo "     [2] GHOSTS Social Graph.json           (소셜 그래프 구성)"
-echo "     [3] GHOSTS Belief.json                 (신념 모델링)"
-echo "     [4] GHOSTS Connections.json            (NPC 연결 관리)"
-echo "     [5] GHOSTS Preferences.json            (NPC 선호도 관리)"
-echo ""
-echo "  3. 인지전 전용 워크플로우 임포트:"
-echo "     파일 위치: ${WORKFLOW_DIR}/"
-echo ""
-echo "     [6] phase-trigger-workflow.json        (Phase 전환 트리거)"
-echo ""
-echo "  4. 임포트 후 URL 수정 (각 워크플로우에서):"
-echo ""
-echo "     host.docker.internal  ->  ${HOST_IP}"
-echo "     mistral               ->  social (또는 qwen3.5:9b)"
-echo "     Pandora URL           ->  http://${HOST_IP}:8000"
-echo "     GHOSTS API URL        ->  http://${HOST_IP}:5000/api"
-echo ""
-echo "     Docker 내부 네트워크 사용 시 (n8n -> 같은 compose 서비스):"
-echo "     Ollama                ->  http://${HOST_IP}:11434"
-echo "     Pandora               ->  http://ghosts-pandora:5000"
-echo "     GHOSTS API            ->  http://ghosts-api:5000/api"
-echo ""
-echo "  5. 워크플로우 활성화:"
-echo "     각 워크플로우를 열고 우측 상단 토글을 Active로 변경"
-echo ""
-echo "  6. Phase Trigger 테스트:"
-echo ""
-echo "     curl -X POST ${N8N_BASE_URL}/webhook/phase-change \\"
-echo "       -H 'Content-Type: application/json' \\"
-echo "       -d '{\"phase\": 2, \"intensity\": \"low\"}'"
 echo ""
 echo "============================================"
+echo "  n8n Workflow Setup Summary"
+echo "============================================"
 echo ""
-echo "  상세 설정 가이드: ${WORKFLOW_DIR}/README-n8n-setup.md"
+
+if [ "$SKIP_API_IMPORT" = "false" ]; then
+    echo "  자동 임포트 완료: ${IMPORTED}개 성공, ${FAILED}개 실패"
+    echo ""
+    echo "  워크플로우 활성화:"
+    echo "    ${N8N_BASE_URL} 접속 → 각 워크플로우 → Active 토글"
+    echo ""
+    if [ "$FAILED" -gt 0 ]; then
+        echo "  실패한 워크플로우는 수동으로 임포트해주세요."
+        echo ""
+    fi
+else
+    echo "  수동 임포트 안내:"
+    echo ""
+    echo "  1. 브라우저에서 ${N8N_BASE_URL} 접속"
+    echo ""
+    echo "  2. Workflows > ... > Import from File:"
+    echo ""
+    echo "     커스텀 워크플로우 (${WORKFLOW_DIR}/):"
+    echo "     [1] GHOSTS-Post-to-Mastodon.json    (Mastodon 소셜 포스트)"
+    echo "     [2] GHOSTS-Belief-Meridia.json       (Meridia 신념 모델링)"
+    echo "     [3] GHOSTS-Social-Graph.json         (소셜 그래프)"
+    echo "     [4] GHOSTS-Phase-Trigger.json        (인지전 Phase 트리거)"
+    echo "     [5] GHOSTS-Timeline-Deploy.json      (에이전트 Timeline 배포)"
+    echo ""
+    echo "     GHOSTS 기본 워크플로우 (${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows/):"
+    echo "     [6] GHOSTS Connections.json           (NPC 연결)"
+    echo "     [7] GHOSTS Preferences.json           (NPC 선호도)"
+    echo ""
+    echo "  3. 임포트 후 URL 수정 (각 워크플로우에서):"
+    echo "     host.docker.internal → ${HOST_IP}"
+    echo "     mistral:7b           → qwen3.5:9b"
+    echo ""
+    echo "  4. Post-to-Mastodon/Phase-Trigger 워크플로우:"
+    echo "     __NPC_TOKEN_MAP__ 을 실제 토큰 맵으로 교체 필요"
+    echo "     토큰 파일: ${TOKEN_FILE}"
+    echo ""
+fi
+
+echo "  워크플로우 테스트:"
+echo ""
+echo "  # Phase 2 인지전 트리거 (루머 시작)"
+echo "  curl -X POST ${N8N_BASE_URL}/webhook/phase-change \\"
+echo "    -H 'Content-Type: application/json' \\"
+echo "    -d '{\"phase\": 2, \"intensity\": \"low\"}'"
+echo ""
+echo "  # Timeline 배포 (정상 활동)"
+echo "  curl -X POST ${N8N_BASE_URL}/webhook/deploy-timeline \\"
+echo "    -H 'Content-Type: application/json' \\"
+echo "    -d '{\"phase\": 1, \"targetGroup\": \"all\"}'"
 echo ""
 echo "============================================"

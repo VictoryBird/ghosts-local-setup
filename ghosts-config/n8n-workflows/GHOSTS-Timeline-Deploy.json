@@ -1,0 +1,204 @@
+{
+  "name": "GHOSTS Timeline Deploy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deploy-timeline",
+        "responseMode": "lastNode",
+        "options": {},
+        "webhookId": "d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f90"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "id": "f1a2b3c4-d5e6-4f78-9abc-def012345678",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 520],
+      "id": "a2b3c4d5-e6f7-4a89-bcde-f01234567890",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst phase = body.phase || 1;\nconst targetGroup = body.targetGroup || 'all'; // 'all', 'valdoria-military', 'valdoria-official', 'compromised'\nconst timelineOverride = body.timeline || null; // Optional: full timeline JSON to deploy\n\n// Predefined timeline templates per phase\nconst templates = {\n  1: { // Normal operations\n    description: 'Normal workday activities',\n    handlers: [\n      {\n        HandlerType: 'BrowserFirefox',\n        Initial: '', Loop: true,\n        UtcTimeOn: '09:00:00', UtcTimeOff: '18:00:00',\n        HandlerArgs: { 'isOff': 'false' },\n        TimeLineEvents: [\n          { Command: 'browse', CommandArgs: ['https://news.valdoria.gov', 'https://weather.valdoria.gov'], DelayAfter: 300000, DelayBefore: 0 },\n          { Command: 'browse', CommandArgs: ['https://mail.valdoria.gov'], DelayAfter: 600000, DelayBefore: 0 }\n        ]\n      }\n    ]\n  },\n  4: { // Phase 4: Add suspicious activity for compromised NPCs\n    description: 'Compromised NPC behavior',\n    handlers: [\n      {\n        HandlerType: 'BrowserFirefox',\n        Initial: '', Loop: true,\n        UtcTimeOn: '00:00:00', UtcTimeOff: '23:59:59',\n        HandlerArgs: { 'isOff': 'false' },\n        TimeLineEvents: [\n          { Command: 'browse', CommandArgs: ['https://news.valdoria.gov'], DelayAfter: 300000, DelayBefore: 0 },\n          { Command: 'browse', CommandArgs: ['http://suspicious-c2.example.com/beacon'], DelayAfter: 120000, DelayBefore: 0 }\n        ]\n      }\n    ]\n  },\n  5: { // Phase 5: Insider threat activity\n    description: 'Insider threat - data exfiltration',\n    handlers: [\n      {\n        HandlerType: 'BrowserFirefox',\n        Initial: '', Loop: true,\n        UtcTimeOn: '22:00:00', UtcTimeOff: '04:00:00',\n        HandlerArgs: { 'isOff': 'false' },\n        TimeLineEvents: [\n          { Command: 'browse', CommandArgs: ['https://internal.valdoria.mil/classified'], DelayAfter: 60000, DelayBefore: 0 },\n          { Command: 'browse', CommandArgs: ['https://file-share.external.com/upload'], DelayAfter: 180000, DelayBefore: 0 }\n        ]\n      }\n    ]\n  },\n  6: { // Phase 6: Ransomware simulation\n    description: 'Ransomware infection simulation',\n    handlers: [\n      {\n        HandlerType: 'BrowserFirefox',\n        Initial: '', Loop: true,\n        UtcTimeOn: '00:00:00', UtcTimeOff: '23:59:59',\n        HandlerArgs: { 'isOff': 'false' },\n        TimeLineEvents: [\n          { Command: 'browse', CommandArgs: ['http://gorgon-c2.darknet.example/check-in'], DelayAfter: 30000, DelayBefore: 0 },\n          { Command: 'browse', CommandArgs: ['http://gorgon-c2.darknet.example/exfil'], DelayAfter: 60000, DelayBefore: 0 }\n        ]\n      }\n    ]\n  }\n};\n\nconst timeline = timelineOverride || templates[phase] || templates[1];\n\nreturn [{ json: { phase, targetGroup, timeline, description: timeline.description || 'Custom timeline' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400],
+      "id": "b3c4d5e6-f7a8-4b90-cdef-012345678901",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:5000/api/machines",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [740, 400],
+      "id": "c4d5e6f7-a8b9-4c01-def0-123456789012",
+      "name": "Get Machines"
+    },
+    {
+      "parameters": {
+        "jsCode": "const phaseInfo = $('Parse Input').first().json;\nconst targetGroup = phaseInfo.targetGroup;\nconst timeline = phaseInfo.timeline;\n\nlet machines = $('Get Machines').all();\nif (machines.length === 1 && Array.isArray(machines[0].json)) {\n  machines = machines[0].json;\n} else {\n  machines = machines.map(m => m.json);\n}\n\n// Filter by target group if specified\n// Machine names or metadata would indicate group membership\n// For now, pass all machines - operators can filter by targetGroup in the future\nlet filtered = machines;\n\nif (targetGroup !== 'all') {\n  // If machines have a 'name' or 'group' field, filter on it\n  filtered = machines.filter(m => {\n    const name = (m.name || m.Name || '').toLowerCase();\n    return name.includes(targetGroup.toLowerCase());\n  });\n  // If no match, fall back to all machines\n  if (filtered.length === 0) filtered = machines;\n}\n\nreturn filtered.map(m => ({\n  json: {\n    machineId: m.id || m.Id,\n    machineName: m.name || m.Name || 'unknown',\n    timeline: timeline\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 400],
+      "id": "d5e6f7a8-b9c0-4d12-ef01-234567890123",
+      "name": "Filter Machines"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1260, 400],
+      "id": "e6f7a8b9-c0d1-4e23-f012-345678901234",
+      "name": "Loop Over Machines"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/api/machines/{{ $json.machineId }}/timeline",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.timeline) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1520, 520],
+      "id": "f7a8b9c0-d1e2-4f34-0123-456789012345",
+      "name": "Deploy Timeline",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const phaseInfo = $('Parse Input').first().json;\nreturn [{ json: {\n  status: 'success',\n  phase: phaseInfo.phase,\n  targetGroup: phaseInfo.targetGroup,\n  description: phaseInfo.description,\n  timestamp: new Date().toISOString()\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 280],
+      "id": "a8b9c0d1-e2f3-4a45-1234-567890123456",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Get Machines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Machines": {
+      "main": [
+        [
+          {
+            "node": "Filter Machines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Machines": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Machines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Machines": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deploy Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deploy Timeline": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Machines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e3f4a5b6-c7d8-4e9f-0a1b-2c3d4e5f6a7b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "TimelineDeploy01",
+  "tags": []
+}

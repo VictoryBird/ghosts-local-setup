@@ -1,0 +1,239 @@
+{
+  "name": "GHOSTS Post to Mastodon",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-post",
+        "options": {},
+        "webhookId": "b3c1d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 500],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:5000/api/npcs/list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [480, 400],
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Get all NPCs"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [720, 400],
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://host.docker.internal:5000/api/npcs/{{ $json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [960, 400],
+      "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "name": "Get NPC Detail"
+    },
+    {
+      "parameters": {
+        "jsCode": "const npc = $input.item.json;\n\nconst firstName = npc.firstName || npc.name?.split(' ')[0] || 'Unknown';\nconst lastName = npc.lastName || npc.name?.split(' ').slice(1).join(' ') || 'User';\nconst role = (npc.role || '').toLowerCase();\nconst country = (npc.country || '').toLowerCase();\nconst attributes = npc.attributes || {};\n\nconst roleKey = country + '/' + role;\n\nconst modelMap = {\n  'valdoria/citizen': 'social-valdoria-citizen',\n  'valdoria/military': 'social-valdoria-military',\n  'valdoria/official': 'social-valdoria-official',\n  'valdoria/media': 'social-media-reporter',\n  'krasnovia/official': 'social-krasnovia-official',\n  'krasnovia/media': 'social-media-reporter',\n  'krasnovia/disguised': 'social-krasnovia-disguised',\n  'krasnovia/bot': 'social-bot',\n};\n\nlet model = modelMap[roleKey];\nif (!model) {\n  if (country === 'tarvek') {\n    model = 'social-tarvek';\n  } else if (country === 'arventa') {\n    model = 'social-arventa';\n  } else {\n    model = 'qwen3.5:9b';\n  }\n}\n\nconst profileJson = JSON.stringify({\n  firstName,\n  lastName,\n  role: npc.role,\n  country: npc.country,\n  attributes,\n});\n\nconst prompt = `Write a short social media post (1-3 sentences) as this person. Profile: ${profileJson}. Post naturally on MeridiaNet.`;\n\nconst username = (firstName.charAt(0) + lastName).toLowerCase().replace(/[^a-z0-9_]/g, '');\nconst displayName = firstName + ' ' + lastName;\nconst npcId = npc.id;\n\nreturn [{ json: { prompt, model, username, displayName, npcId } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 400],
+      "id": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "name": "Build Prompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: $json.model, prompt: $json.prompt, stream: false, options: { temperature: 0.8, num_predict: 256 } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1440, 400],
+      "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "name": "Call Ollama"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ollamaResponse = $input.item.json;\nlet content = ollamaResponse.response || ollamaResponse.text || '';\n\n// Strip <think>...</think> tags\ncontent = content.replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\n\n// Truncate to 500 chars\nif (content.length > 500) {\n  content = content.substring(0, 497) + '...';\n}\n\nconst username = $('Build Prompt').item.json.username;\nconst model = $('Build Prompt').item.json.model;\nconst npcId = $('Build Prompt').item.json.npcId;\n\nconst TOKEN_MAP = __NPC_TOKEN_MAP__;\n\nconst token = TOKEN_MAP[username];\n\nif (!token) {\n  console.log(`WARNING: No Mastodon token found for username: ${username}`);\n  return [{ json: { mastodonPostId: null, username, content: '', model, error: 'No token found' } }];\n}\n\nif (!content) {\n  console.log(`WARNING: Empty content for username: ${username}`);\n  return [{ json: { mastodonPostId: null, username, content: '', model, error: 'Empty content' } }];\n}\n\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'http://host.docker.internal:8000/api/v1/statuses',\n  headers: {\n    'Authorization': 'Bearer ' + token,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ status: content }),\n});\n\nconst mastodonPostId = response.id || null;\n\nreturn [{ json: { mastodonPostId, username, content, model } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 400],
+      "id": "b8c9d0e1-f2a3-4567-bcde-678901234567",
+      "name": "Post to Mastodon"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:5000/api/npcs/{{ $('Build Prompt').item.json.npcId }}/activity",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "activityType",
+              "value": "SocialMediaPost"
+            },
+            {
+              "name": "detail",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1920, 400],
+      "id": "c9d0e1f2-a3b4-5678-cdef-789012345678",
+      "name": "Log Activity"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get all NPCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get all NPCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all NPCs": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get NPC Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get NPC Detail": {
+      "main": [
+        [
+          {
+            "node": "Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Ollama": {
+      "main": [
+        [
+          {
+            "node": "Post to Mastodon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Mastodon": {
+      "main": [
+        [
+          {
+            "node": "Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Activity": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e4f5a6b7-c8d9-0123-ef45-6789abcdef01",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "gHoStPoSt01",
+  "tags": []
+}

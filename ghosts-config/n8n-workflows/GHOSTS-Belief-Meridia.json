@@ -1,0 +1,209 @@
+{
+  "name": "GHOSTS Belief - Meridia",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/10 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000001",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "path": "beliefs",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 200],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000002",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/npcs/list",
+        "method": "GET"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000003",
+      "name": "Get NPC List"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet npcs;\nif (items.length === 1 && Array.isArray(items[0].json)) {\n  npcs = [...items[0].json];\n} else {\n  npcs = items.map(i => i.json);\n}\nfor (let i = npcs.length - 1; i > 0; i--) {\n  const j = Math.floor(Math.random() * (i + 1));\n  [npcs[i], npcs[j]] = [npcs[j], npcs[i]];\n}\nreturn npcs.slice(0, 10).map(npc => ({ json: npc }));",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000004",
+      "name": "Select Random NPCs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [780, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000005",
+      "name": "Split NPCs"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:5000/api/npcs/{{ $json.id }}/beliefs",
+        "method": "GET"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000006",
+      "name": "Get NPC Beliefs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const beliefs = [\n  'I trust the Valdoria government',\n  'The cyber attacks are Krasnovia fault',\n  'Valdoria should negotiate peace',\n  'The government is hiding information from citizens',\n  'Our military can protect us from threats',\n  'Social media information is reliable',\n  'Krasnovia is a genuine threat to our security',\n  'The economy will recover despite the crisis',\n  'International allies will support Valdoria',\n  'I feel safe in my city'\n];\n\nconst npc = $('Split NPCs').item.json;\nconst npcBeliefs = $input.all();\nconst currentStep = Date.now();\n\nlet belief;\nlet likelihood;\nlet posterior;\n\nif (npcBeliefs.length > 0 && npcBeliefs[0].json && npcBeliefs[0].json.length > 0) {\n  const sorted = npcBeliefs[0].json.sort((a, b) => b.step - a.step);\n  const latest = sorted[0];\n  likelihood = latest.likelihood;\n  const priorPosterior = latest.posterior;\n  const numerator = likelihood * priorPosterior;\n  const denominator = numerator + ((1 - likelihood) * (1 - priorPosterior));\n  posterior = numerator / denominator;\n  belief = latest.name;\n} else {\n  likelihood = Math.random() * 0.5 + 0.25;\n  posterior = 0.5;\n  belief = beliefs[Math.floor(Math.random() * beliefs.length)];\n}\n\nreturn [{\n  json: {\n    npcId: npc.id,\n    name: belief,\n    step: currentStep,\n    likelihood: likelihood,\n    posterior: posterior\n  }\n}];",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1260, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000007",
+      "name": "Calculate Belief Update",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:5000/api/npcs/{{ $json.npcId }}/beliefs",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"toNpcId\": \"{{ $json.npcId }}\", \"fromNpcId\": \"{{ $json.npcId }}\", \"name\": \"{{ $json.name }}\", \"step\": {{ $json.step }}, \"likelihood\": {{ $json.likelihood }}, \"posterior\": {{ $json.posterior }} }"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 100],
+      "id": "a1b2c3d4-1111-4aaa-b111-000000000008",
+      "name": "Save Belief via API"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get NPC List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get NPC List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get NPC List": {
+      "main": [
+        [
+          {
+            "node": "Select Random NPCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Random NPCs": {
+      "main": [
+        [
+          {
+            "node": "Split NPCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split NPCs": {
+      "main": [
+        null,
+        [
+          {
+            "node": "Get NPC Beliefs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get NPC Beliefs": {
+      "main": [
+        [
+          {
+            "node": "Calculate Belief Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Belief Update": {
+      "main": [
+        [
+          {
+            "node": "Save Belief via API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Belief via API": {
+      "main": [
+        [
+          {
+            "node": "Split NPCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d4e5f6a7-2222-4bbb-c222-111111111111",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "blfMrd1",
+  "tags": []
+}

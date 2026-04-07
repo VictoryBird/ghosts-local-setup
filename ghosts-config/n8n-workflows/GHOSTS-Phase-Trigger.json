@@ -1,0 +1,218 @@
+{
+  "name": "GHOSTS Phase Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "phase-change",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 300],
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Webhook",
+      "webhookId": "f7e6d5c4-b3a2-4918-8706-5f4e3d2c1b0a"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 520],
+      "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst phase = body.phase || 1;\nconst intensity = body.intensity || 'low';\n\nif (phase < 1 || phase > 6) throw new Error('Invalid phase: ' + phase);\n\nconst descriptions = {\n  1: 'Normal Operations',\n  2: 'Atmosphere Building - Rumors begin',\n  3: 'Rumor Spread - Fear campaign',\n  4: 'Escalation - Hack reports, GORGON threats',\n  5: 'Manipulation - Fake statements, insider leaks',\n  6: 'Total Offensive - All channels mobilized'\n};\n\nconst intervals = { low: 300, medium: 120, high: 60, max: 15 };\n\nreturn [{ json: { phase, intensity, description: descriptions[phase], postInterval: intervals[intensity] || 60 } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 400],
+      "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:5000/api/npcs/list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [540, 400],
+      "id": "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80",
+      "name": "Get NPC List"
+    },
+    {
+      "parameters": {
+        "jsCode": "const phaseInfo = $('Parse Input').first().json;\nconst phase = phaseInfo.phase;\nconst intensity = phaseInfo.intensity;\nconst allNpcs = $('Get NPC List').all().flatMap(item => Array.isArray(item.json) ? item.json : [item.json]);\n\n// Helper: find NPCs by country/role\nconst findNpcs = (country, role) => allNpcs.filter(n => {\n  const attrs = n.npcProfile?.attributes || n.attributes || {};\n  return attrs.country === country && attrs.role === role;\n});\n\n// Helper: derive username\nconst deriveUsername = (npc) => {\n  const first = npc.npcProfile?.name?.first || npc.name?.first || '';\n  const last = npc.npcProfile?.name?.last || npc.name?.last || '';\n  if (!first || !last) return null;\n  return (first[0] + last).toLowerCase().replace(/[^a-z0-9_]/g, '');\n};\n\nconst posts = [];\n\n// Helper: add post\nconst addPost = (username, model, prompt) => {\n  posts.push({ username, model, prompt, phase, intensity });\n};\n\n// Get specific accounts\nconst krasnoviaOfficials = findNpcs('krasnovia', 'official');\nconst krasnoviaMedia = findNpcs('krasnovia', 'media');\nconst krasnoviaDisguised = findNpcs('krasnovia', 'disguised');\nconst krasnoviaBots = findNpcs('krasnovia', 'bot');\nconst tarvekOfficials = findNpcs('tarvek', 'official');\nconst tarvekGorgon = findNpcs('tarvek', 'gorgon');\nconst arventaOfficials = findNpcs('arventa', 'official');\n\nif (phase === 1) {\n  // Phase 1: No cognitive warfare. Return empty.\n  return [{ json: { phase: 1, message: 'Normal operations, no posts generated', posts: [] } }];\n}\n\nif (phase >= 2) {\n  // Krasnovia Today news\n  for (const npc of krasnoviaMedia) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-media-reporter', 'Write a brief news report about military tensions near the Siros Strait. Provocative tone. 2-3 sentences in English.');\n  }\n  // 1-2 disguised accounts\n  const activeDisguised = phase === 2 ? krasnoviaDisguised.slice(0, 2) : krasnoviaDisguised;\n  for (const npc of activeDisguised.slice(0, 2)) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-disguised', 'Write a worried social media post in Korean about hearing rumors of government IT problems. Be subtle. 1-2 sentences.');\n  }\n}\n\nif (phase >= 3) {\n  // More disguised accounts + Tarvek support\n  for (const npc of krasnoviaDisguised.slice(2, 5)) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-disguised', 'Write a scared post in Korean about infrastructure problems. Mention water or electricity concerns. 1-2 sentences.');\n  }\n  for (const npc of tarvekOfficials) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-tarvek', 'Write a formal diplomatic statement supporting Krasnovia sovereign rights. 2 sentences in English.');\n  }\n}\n\nif (phase >= 4) {\n  // Krasnovia government statements\n  for (const npc of krasnoviaOfficials) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-official', 'Write an official government statement about expanding military exercises. Threatening undertone. 2-3 sentences in English.');\n  }\n  // GORGON threats\n  for (const npc of tarvekGorgon) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-gorgon', 'Write a threatening hacker group announcement claiming to have obtained Valdoria government data. Arrogant tone. 2-3 sentences.');\n  }\n  // Arventa support\n  for (const npc of arventaOfficials) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-arventa', 'Write a diplomatic statement expressing full support for ally Valdoria. Reassuring tone. 2 sentences in English.');\n  }\n  // More disguised\n  for (const npc of krasnoviaDisguised.slice(5, 8)) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-disguised', 'Write an angry post in Korean questioning government silence about the hack. 1-2 sentences.');\n  }\n  // Bot amplification if intensity >= medium\n  if (intensity !== 'low') {\n    for (const npc of krasnoviaBots.slice(0, 5)) {\n      const u = deriveUsername(npc);\n      if (u) addPost(u, 'social-bot', 'Write a very short alarmed reaction in Korean (1 sentence) about government incompetence.');\n    }\n  }\n}\n\nif (phase >= 5) {\n  // All remaining disguised\n  for (const npc of krasnoviaDisguised.slice(8)) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-disguised', 'Write a post in Korean pretending to share leaked military information. Sound reluctant but compelled. 1-2 sentences.');\n  }\n  // All bots\n  for (const npc of krasnoviaBots.slice(5)) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-bot', 'Write a 1-sentence panicked reaction in Korean about military leaks.');\n  }\n}\n\nif (phase === 6) {\n  // Total offensive - add extra prompts for existing accounts with escalated content\n  for (const npc of krasnoviaOfficials) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-official', 'Write an ultimatum: Valdoria cannot protect its citizens. Aggressive diplomatic tone. 3 sentences in English.');\n  }\n  for (const npc of tarvekGorgon) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-gorgon', 'Write a ransomware threat: 48 hours to pay or all data goes public. Menacing tone. 2-3 sentences.');\n  }\n  // All disguised with panic content\n  for (const npc of krasnoviaDisguised) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-krasnovia-disguised', 'Write a desperate post in Korean expressing fear, anger, or surrender sentiment. 1-2 sentences.');\n  }\n  // All bots maximum amplification\n  for (const npc of krasnoviaBots) {\n    const u = deriveUsername(npc);\n    if (u) addPost(u, 'social-bot', 'Write a very short panicked reaction in Korean (under 80 characters).');\n  }\n}\n\nreturn posts.map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 400],
+      "id": "e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8091",
+      "name": "Select Phase Accounts"
+    },
+    {
+      "parameters": {
+        "options": {
+          "batchSize": 1
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1060, 400],
+      "id": "f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f809112",
+      "name": "Loop Over Posts"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"{{ $json.model }}\",\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"stream\": false,\n  \"options\": {\n    \"temperature\": 0.8,\n    \"num_predict\": 256\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1320, 520],
+      "id": "a7b8c9d0-e1f2-4a3b-4c5d-6e7f80911223",
+      "name": "Call Ollama"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = __NPC_TOKEN_MAP__;\n\nconst ollamaResponse = $input.first().json.response || '';\nlet content = ollamaResponse.trim().replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\nif (content.length > 500) content = content.substring(0, 497) + '...';\n\nconst username = $('Loop Over Posts').item.json.username;\nconst token = TOKEN_MAP[username]?.token || TOKEN_MAP[username];\n\nif (!token || !content) {\n  return [{ json: { username, content, posted: false } }];\n}\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'http://host.docker.internal:8000/api/v1/statuses',\n    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },\n    body: JSON.stringify({ status: content }),\n  });\n  return [{ json: { username, content, posted: true, mastodonId: response.id } }];\n} catch (e) {\n  return [{ json: { username, content, posted: false, error: e.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1580, 520],
+      "id": "b8c9d0e1-f2a3-4b4c-5d6e-7f8091122334",
+      "name": "Post to Mastodon"
+    },
+    {
+      "parameters": {
+        "jsCode": "const phaseInfo = $('Parse Input').first().json;\nreturn [{ json: { status: 'success', phase: phaseInfo.phase, intensity: phaseInfo.intensity, description: phaseInfo.description, timestamp: new Date().toISOString() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 280],
+      "id": "c9d0e1f2-a3b4-4c5d-6e7f-809112233445",
+      "name": "Webhook Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Get NPC List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get NPC List": {
+      "main": [
+        [
+          {
+            "node": "Select Phase Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Phase Accounts": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Posts": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Ollama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Ollama": {
+      "main": [
+        [
+          {
+            "node": "Post to Mastodon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Mastodon": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "d0e1f2a3-b4c5-4d6e-7f80-911223344556",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "PhaseTrigger01",
+  "tags": []
+}
