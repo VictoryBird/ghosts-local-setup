@@ -72,16 +72,17 @@ for i in $(seq 1 $MAX_RETRIES); do
 done
 
 # -----------------------------------------------------------------------------
-# 2. Build NPC token map
+# 2. Build NPC token map (saved to temp file to avoid bash quoting issues)
 # -----------------------------------------------------------------------------
 echo ""
 echo "[2/4] Building NPC token map..."
 
+TOKEN_MAP_FILE=$(mktemp)
 if [ -f "$TOKEN_FILE" ]; then
-    # Build a simplified { username: token } map for workflow injection
-    NPC_TOKEN_MAP=$(python3 -c "
+    python3 - "$TOKEN_FILE" "$TOKEN_MAP_FILE" << 'PYEOF'
 import json, sys
-with open('${TOKEN_FILE}') as f:
+token_file, out_file = sys.argv[1], sys.argv[2]
+with open(token_file) as f:
     data = json.load(f)
 simple = {}
 for username, info in data.items():
@@ -89,14 +90,16 @@ for username, info in data.items():
         simple[username] = info['token']
     elif isinstance(info, str):
         simple[username] = info
-print(json.dumps(simple))
-" 2>/dev/null || echo "{}")
-    TOKEN_COUNT=$(echo "$NPC_TOKEN_MAP" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+with open(out_file, 'w') as f:
+    json.dump(simple, f)
+print(len(simple))
+PYEOF
+    TOKEN_COUNT=$(cat "$TOKEN_MAP_FILE" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
     echo "  -> Loaded ${TOKEN_COUNT} NPC tokens."
 else
     echo "  [WARNING] Token file not found: ${TOKEN_FILE}"
     echo "  -> Run setup-mastodon-npcs.sh first for Mastodon posting."
-    NPC_TOKEN_MAP="{}"
+    echo "{}" > "$TOKEN_MAP_FILE"
 fi
 
 # -----------------------------------------------------------------------------
@@ -153,39 +156,44 @@ import_workflow() {
 
     echo -n "  -> ${name} ... "
 
-    # Process the workflow JSON:
-    # 1. Keep only importable fields (name, nodes, connections, settings)
-    # 2. Replace host.docker.internal with actual IP
-    # 3. Replace mistral:7b with qwen3.5:9b
-    # 4. Inject NPC token map
     local temp_file
     temp_file=$(mktemp)
 
-    python3 -c "
+    # Use heredoc + sys.argv to avoid bash variable quoting issues
+    python3 - "$file" "${HOST_IP}" "${TOKEN_MAP_FILE}" > "$temp_file" 2>/dev/null << 'PYEOF'
 import json, sys
 
-with open('${file}') as f:
+workflow_file = sys.argv[1]
+host_ip = sys.argv[2]
+token_map_file = sys.argv[3]
+
+with open(workflow_file) as f:
     d = json.load(f)
 
 # Keep only fields that n8n import API accepts
-keep = {'name', 'nodes', 'connections', 'settings'}
+keep = {"name", "nodes", "connections", "settings"}
 d = {k: v for k, v in d.items() if k in keep}
 
 raw = json.dumps(d)
 
 # Replace placeholders
-raw = raw.replace('host.docker.internal', '${HOST_IP}')
-raw = raw.replace('mistral:7b', 'qwen3.5:9b')
-raw = raw.replace('mistral', 'qwen3.5:9b')
+raw = raw.replace("host.docker.internal", host_ip)
+raw = raw.replace("mistral:7b", "qwen3.5:9b")
+raw = raw.replace("mistral", "qwen3.5:9b")
 
-# Inject NPC token map
-token_map = '${NPC_TOKEN_MAP}'
-raw = raw.replace('__NPC_TOKEN_MAP__', token_map)
+# Inject NPC token map into jsCode strings
+# __NPC_TOKEN_MAP__ sits inside a JSON string value, so quotes must be escaped
+if "__NPC_TOKEN_MAP__" in raw:
+    with open(token_map_file) as f:
+        token_map = json.dumps(json.load(f))
+    # Escape for embedding inside a JSON string value: \ -> \\, " -> \"
+    escaped = token_map.replace("\\", "\\\\").replace('"', '\\"')
+    raw = raw.replace("__NPC_TOKEN_MAP__", escaped)
 
 # Parse back to validate JSON
 d = json.loads(raw)
 print(json.dumps(d))
-" > "$temp_file" 2>/dev/null
+PYEOF
 
     if [ ! -s "$temp_file" ]; then
         echo "FAILED (JSON processing error)"
@@ -252,6 +260,9 @@ if [ "$SKIP_API_IMPORT" = "false" ]; then
     echo ""
     echo "  Imported: ${IMPORTED}  Failed: ${FAILED}"
 fi
+
+# Clean up token map temp file
+rm -f "$TOKEN_MAP_FILE"
 
 # -----------------------------------------------------------------------------
 # Print summary and instructions
