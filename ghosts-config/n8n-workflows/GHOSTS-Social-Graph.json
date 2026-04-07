@@ -137,7 +137,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const npcId = $('Split NPCs').item.json.id;\nconst allNpcs = $input.item.json;\nconst filtered = (Array.isArray(allNpcs) ? allNpcs : [allNpcs])\n  .filter(n => n.id !== npcId);\n// Shuffle and take up to 10\nfor (let i = filtered.length - 1; i > 0; i--) {\n  const j = Math.floor(Math.random() * (i + 1));\n  [filtered[i], filtered[j]] = [filtered[j], filtered[i]];\n}\nreturn filtered.slice(0, 10).map(conn => ({\n  json: { npcId, connectedNpcId: conn.id, name: conn.name || '' }\n}));",
+        "jsCode": "const npcId = $('Split NPCs').first().json.id;\nconst allNpcs = $input.first().json;\nconst filtered = (Array.isArray(allNpcs) ? allNpcs : [allNpcs])\n  .filter(n => n.id !== npcId);\n// Shuffle and take up to 10\nfor (let i = filtered.length - 1; i > 0; i--) {\n  const j = Math.floor(Math.random() * (i + 1));\n  [filtered[i], filtered[j]] = [filtered[j], filtered[i]];\n}\nreturn filtered.slice(0, 10).map(conn => ({\n  json: { npcId, connectedNpcId: conn.id, name: conn.name || '' }\n}));",
         "mode": "runOnceForAllItems"
       },
       "type": "n8n-nodes-base.code",

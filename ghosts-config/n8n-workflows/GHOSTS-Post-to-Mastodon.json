@@ -83,17 +83,42 @@
       "typeVersion": 4.3,
       "position": [1440, 400],
       "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
-      "name": "Call Ollama"
+      "name": "Call Ollama",
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const ollamaResponse = $input.item.json;\nlet content = ollamaResponse.response || ollamaResponse.text || '';\n\n// Strip <think>...</think> tags\ncontent = content.replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\n\n// Truncate to 500 chars\nif (content.length > 500) {\n  content = content.substring(0, 497) + '...';\n}\n\nconst username = $('Build Prompt').item.json.username;\nconst model = $('Build Prompt').item.json.model;\nconst npcId = $('Build Prompt').item.json.npcId;\n\nconst TOKEN_MAP = __NPC_TOKEN_MAP__;\n\nconst token = TOKEN_MAP[username];\n\nif (!token) {\n  console.log(`WARNING: No Mastodon token found for username: ${username}`);\n  return [{ json: { mastodonPostId: null, username, content: '', model, error: 'No token found' } }];\n}\n\nif (!content) {\n  console.log(`WARNING: Empty content for username: ${username}`);\n  return [{ json: { mastodonPostId: null, username, content: '', model, error: 'Empty content' } }];\n}\n\nconst response = await this.helpers.httpRequest({\n  method: 'POST',\n  url: 'http://host.docker.internal:8000/api/v1/statuses',\n  headers: {\n    'Authorization': 'Bearer ' + token,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ status: content }),\n});\n\nconst mastodonPostId = response.id || null;\n\nreturn [{ json: { mastodonPostId, username, content, model } }];"
+        "jsCode": "const ollamaResponse = $input.item.json;\nlet content = ollamaResponse.response || ollamaResponse.text || '';\n\n// Strip <think>...</think> tags\ncontent = content.replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\n\n// Truncate to 500 chars\nif (content.length > 500) {\n  content = content.substring(0, 497) + '...';\n}\n\nconst username = $('Build Prompt').item.json.username;\n\nlet TOKEN_MAP = {};\ntry { TOKEN_MAP = __NPC_TOKEN_MAP__; } catch(e) { /* setup script will inject tokens */ }\n\nconst token = TOKEN_MAP[username] || '';\n\nif (!token) {\n  console.log('WARNING: No Mastodon token found for username: ' + username);\n}\n\nreturn [{ json: { content, token, username } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1680, 400],
       "id": "b8c9d0e1-f2a3-4567-bcde-678901234567",
-      "name": "Post to Mastodon"
+      "name": "Prepare Mastodon Post"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"status\": \"{{ $json.content }}\" }"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1920, 400],
+      "id": "d0e1f2a3-b4c5-6789-defa-890123456789",
+      "name": "Post to Mastodon",
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -116,7 +141,7 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [1920, 400],
+      "position": [2160, 400],
       "id": "c9d0e1f2-a3b4-5678-cdef-789012345678",
       "name": "Log Activity"
     }
@@ -191,6 +216,17 @@
       ]
     },
     "Call Ollama": {
+      "main": [
+        [
+          {
+            "node": "Prepare Mastodon Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Mastodon Post": {
       "main": [
         [
           {
