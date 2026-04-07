@@ -122,31 +122,9 @@ ollama pull "$MODEL_PRIMARY"
 echo "  -> Pulling Pandora model: $MODEL_PANDORA..."
 ollama pull "$MODEL_PANDORA"
 
-# Create Ollama model aliases for GHOSTS API ContentEngine
-echo "  -> Creating Ollama model aliases..."
-
-# "social" model — for social media post generation
-ollama create social -f /dev/stdin <<'MODELFILE'
-FROM qwen3.5:9b
-SYSTEM "You are a social media user. Write short, natural social media posts. Mix Korean and English naturally. Be casual and authentic. Keep posts under 280 characters."
-PARAMETER temperature 0.8
-MODELFILE
-
-# "chat" model — for NPC chat messages
-ollama create chat -f /dev/stdin <<'MODELFILE'
-FROM qwen3.5:9b
-SYSTEM "You are participating in a casual chat conversation. Respond naturally and briefly in Korean or English depending on context. Keep messages conversational and under 200 characters."
-PARAMETER temperature 0.7
-MODELFILE
-
-# "activity" model — for FullAutonomy NPC decision-making
-ollama create activity -f /dev/stdin <<'MODELFILE'
-FROM qwen3.5:9b
-SYSTEM "You are an AI deciding what a simulated office worker should do next on their computer. Suggest realistic activities like browsing websites, writing documents, checking email, or chatting with colleagues. Respond with a brief action description."
-PARAMETER temperature 0.6
-MODELFILE
-
-echo "  -> Ollama models ready."
+# Model aliases removed — using single qwen3.5:9b with per-request system prompts
+# (CPU-only environment cannot handle model swapping)
+echo "  -> Ollama models ready (${MODEL_PRIMARY} + ${MODEL_PANDORA})."
 
 # -----------------------------------------------------------------------------
 # 4. Clone GHOSTS source
