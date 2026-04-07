@@ -91,7 +91,7 @@
         "url": "http://host.docker.internal:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"model\": \"qwen3.5:9b\",\n  \"system\": \"{{ $json.systemPrompt }}\",\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"stream\": false,\n  \"options\": {\n    \"temperature\": 0.8,\n    \"num_predict\": 256\n  }\n}",
+        "jsonBody": "={{ JSON.stringify({ model: \"qwen3.5:9b\", system: $json.systemPrompt || \"\", prompt: $json.prompt || \"\", stream: false, options: { temperature: 0.8, num_predict: 256 } }) }}",
         "options": {
           "timeout": 120000
         }
@@ -133,8 +133,15 @@
           ]
         },
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{ \"status\": \"{{ $json.content }}\" }",
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
