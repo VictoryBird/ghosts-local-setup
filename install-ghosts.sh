@@ -53,7 +53,7 @@ _maybe_sudo_docker() {
 # -----------------------------------------------------------------------------
 # 1. System packages
 # -----------------------------------------------------------------------------
-echo "[1/11] Installing system dependencies..."
+echo "[1/15] Installing system dependencies..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
     curl wget git unzip ca-certificates gnupg lsb-release openssl jq
@@ -62,9 +62,9 @@ sudo apt-get install -y -qq \
 # 2. Docker
 # -----------------------------------------------------------------------------
 if command -v docker &>/dev/null; then
-    echo "[2/11] Docker already installed: $(docker --version)"
+    echo "[2/15] Docker already installed: $(docker --version)"
 else
-    echo "[2/11] Installing Docker..."
+    echo "[2/15] Installing Docker..."
     sudo install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -90,9 +90,9 @@ _maybe_sudo_docker
 # 3. Ollama
 # -----------------------------------------------------------------------------
 if command -v ollama &>/dev/null; then
-    echo "[3/11] Ollama already installed: $(ollama --version)"
+    echo "[3/15] Ollama already installed: $(ollama --version)"
 else
-    echo "[3/11] Installing Ollama..."
+    echo "[3/15] Installing Ollama..."
     curl -fsSL https://ollama.com/install.sh | sh
 fi
 
@@ -151,7 +151,7 @@ echo "  -> Ollama models ready."
 # -----------------------------------------------------------------------------
 # 4. Clone GHOSTS source
 # -----------------------------------------------------------------------------
-echo "[4/11] Cloning GHOSTS source..."
+echo "[4/15] Cloning GHOSTS source..."
 mkdir -p "$GHOSTS_DIR"
 cd "$GHOSTS_DIR"
 
@@ -165,7 +165,7 @@ fi
 # -----------------------------------------------------------------------------
 # 5. Create unified docker-compose.yml
 # -----------------------------------------------------------------------------
-echo "[5/11] Creating unified docker-compose configuration..."
+echo "[5/15] Creating unified docker-compose configuration..."
 
 HOST_IP=$(hostname -I | awk '{print $1}')
 
@@ -301,7 +301,7 @@ COMPOSEOF
 # -----------------------------------------------------------------------------
 # 6. Create configuration files
 # -----------------------------------------------------------------------------
-echo "[6/11] Creating configuration files..."
+echo "[6/15] Creating configuration files..."
 
 mkdir -p "$GHOSTS_DIR/config"
 mkdir -p "$GHOSTS_DIR/content/social"
@@ -762,7 +762,7 @@ TIMELINEOF
 # -----------------------------------------------------------------------------
 # 7. Build Docker images from source
 # -----------------------------------------------------------------------------
-echo "[7/11] Building Docker images from source (this may take several minutes)..."
+echo "[7/15] Building Docker images from source (this may take several minutes)..."
 cd "$GHOSTS_DIR"
 
 # Pull base images (runtime + build SDKs for air-gapped rebuild)
@@ -807,7 +807,7 @@ $COMPOSE_CMD build ghosts-pandora
 # -----------------------------------------------------------------------------
 # 8. Start services
 # -----------------------------------------------------------------------------
-echo "[8/11] Starting all services..."
+echo "[8/15] Starting all services..."
 $COMPOSE_CMD up -d
 
 echo "  -> Waiting for services to initialize..."
@@ -850,7 +850,7 @@ curl -sf -X POST "http://localhost:${PORT_PANDORA}/api/admin/generate/10" > /dev
 # -----------------------------------------------------------------------------
 # 9. Clone config repo and setup Ollama role-specific models
 # -----------------------------------------------------------------------------
-echo "[9/11] Setting up cognitive warfare configuration..."
+echo "[9/15] Setting up cognitive warfare configuration..."
 cd "$GHOSTS_DIR"
 
 if [ -d "config-repo/.git" ]; then
@@ -861,19 +861,14 @@ else
     git clone https://github.com/VictoryBird/ghosts-local-setup.git config-repo
 fi
 
-# Create role-specific Ollama model aliases
-echo "  -> Creating role-specific Ollama model aliases..."
-if [ -f "config-repo/ghosts-config/ollama-models/setup-ollama-models.sh" ]; then
-    chmod +x config-repo/ghosts-config/ollama-models/setup-ollama-models.sh
-    cd config-repo/ghosts-config/ollama-models
-    ./setup-ollama-models.sh
-    cd "$GHOSTS_DIR"
-fi
+# Ollama model aliases are no longer used (CPU-only environment cannot swap models)
+# Instead, qwen3.5:9b is used directly with system prompts passed per request
+echo "  -> Using single model (${MODEL_PRIMARY}) with per-request system prompts."
 
 # -----------------------------------------------------------------------------
 # 10. Generate 130 NPCs
 # -----------------------------------------------------------------------------
-echo "[10/11] Generating 130 NPCs..."
+echo "[10/15] Generating 130 NPCs..."
 
 # Check if NPCs already exist
 NPC_COUNT=$(curl -sf "http://localhost:${PORT_API}/api/npcs/list" 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
@@ -921,9 +916,89 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 11. Final summary
+# 11. Setup Mastodon (MeridiaNet)
 # -----------------------------------------------------------------------------
-echo "[11/11] Final checks..."
+echo "[11/15] Setting up Mastodon (MeridiaNet)..."
+
+chmod +x config-repo/ghosts-config/scripts/setup-mastodon.sh
+config-repo/ghosts-config/scripts/setup-mastodon.sh
+
+# Wait for Mastodon to be healthy
+echo "  -> Waiting for Mastodon..."
+for i in $(seq 1 30); do
+    if curl -sf http://localhost:${PORT_PANDORA}/health > /dev/null 2>&1 || \
+       curl -sf http://localhost:${PORT_PANDORA}/ > /dev/null 2>&1; then
+        echo "  -> Mastodon is ready!"
+        break
+    fi
+    [ "$i" -eq 30 ] && echo "  -> WARNING: Mastodon may not be fully ready yet."
+    sleep 5
+done
+
+# -----------------------------------------------------------------------------
+# 12. Create Mastodon NPC accounts + tokens
+# -----------------------------------------------------------------------------
+echo "[12/15] Creating Mastodon NPC accounts..."
+
+chmod +x config-repo/ghosts-config/scripts/setup-mastodon-npcs.sh
+config-repo/ghosts-config/scripts/setup-mastodon-npcs.sh
+
+# Update display names for all NPC accounts
+echo "  -> Updating NPC display names..."
+TOKEN_FILE="config-repo/ghosts-config/mastodon/npc-data/npc_tokens.json"
+if [ -f "$TOKEN_FILE" ]; then
+    python3 -c "
+import json, subprocess
+with open('${TOKEN_FILE}') as f:
+    data = json.load(f)
+for username, info in data.items():
+    if isinstance(info, dict) and info.get('token') and info.get('display_name'):
+        subprocess.run(['curl', '-s', '-X', 'PATCH',
+            'http://localhost:${PORT_PANDORA}/api/v1/accounts/update_credentials',
+            '-H', 'Authorization: Bearer ' + info['token'],
+            '-d', 'display_name=' + info['display_name']],
+            capture_output=True)
+" 2>/dev/null && echo "  -> Display names updated." || echo "  -> WARNING: Display name update failed."
+fi
+
+# -----------------------------------------------------------------------------
+# 13. Apply influence tier patch + rebuild API
+# -----------------------------------------------------------------------------
+echo "[13/15] Applying influence tier patch..."
+
+chmod +x config-repo/ghosts-config/scripts/patch-influence-tier.sh
+config-repo/ghosts-config/scripts/patch-influence-tier.sh "${GHOSTS_DIR}/GHOSTS/src"
+
+echo "  -> Rebuilding GHOSTS API with influence tier support..."
+cd "$GHOSTS_DIR"
+$COMPOSE_CMD build --no-cache ghosts-api
+$COMPOSE_CMD up -d ghosts-api
+echo "  -> Waiting for API to restart..."
+sleep 10
+for i in $(seq 1 30); do
+    if curl -sf "http://localhost:${PORT_API}/api/home" > /dev/null 2>&1; then
+        echo "  -> API is ready!"
+        break
+    fi
+    sleep 3
+done
+
+# -----------------------------------------------------------------------------
+# 14. Import n8n workflows
+# -----------------------------------------------------------------------------
+echo "[14/15] Setting up n8n workflows..."
+
+chmod +x config-repo/ghosts-config/scripts/setup-n8n.sh
+echo "  -> n8n workflow auto-import requires an API key."
+echo "  -> After install, create one at http://${HOST_IP}:${PORT_N8N}"
+echo "  -> Then run: config-repo/ghosts-config/scripts/setup-n8n.sh <API_KEY>"
+echo ""
+echo "  -> Or import manually from config-repo/ghosts-config/n8n-workflows/"
+
+# -----------------------------------------------------------------------------
+# 15. Final summary
+# -----------------------------------------------------------------------------
+echo "[15/15] Final checks..."
 NPC_FINAL=$(curl -sf "http://localhost:${PORT_API}/api/npcs/list" 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
 echo "  -> NPCs created: ${NPC_FINAL}"
 
@@ -943,8 +1018,13 @@ echo "  Default Credentials:"
 echo "    API Admin:   scotty@cert.org / Password@1"
 echo "    PostgreSQL:  ghosts / scotty@1"
 echo ""
+echo "  Mastodon (MeridiaNet):"
+echo "    URL:         http://${HOST_IP}:${PORT_PANDORA}"
+echo "    Admin:       ghostsadmin (see ~/ghosts/mastodon/mastodon-credentials.env)"
+echo "    NPC accounts: 130+ with API tokens"
+echo ""
 echo "  Ollama Models:"
-echo "    Primary:     ${MODEL_PRIMARY} (+ aliases: social, chat, activity)"
+echo "    Primary:     ${MODEL_PRIMARY} (single model + per-request system prompts)"
 echo "    Pandora:     ${MODEL_PANDORA}"
 echo ""
 echo "  Project Layout:"
@@ -964,16 +1044,12 @@ echo "    timelines/workday-combined.json  — Realistic workday pattern"
 echo ""
 echo "  NPC Configuration:"
 echo "    NPCs: ${NPC_FINAL} created (Meridia2026 scenario)"
-echo "    Ollama models: role-specific aliases ready"
+echo "    Influence tiers: Tier1=Gov/Media, Tier2=Citizens, Tier3=Bots"
 echo ""
-echo "  n8n Workflow Setup (MANUAL — import via n8n UI):"
-echo "    1. Open http://${HOST_IP}:${PORT_N8N}"
-echo "    2. Create Ollama credential: Base URL = http://${HOST_IP}:11434"
-echo "    3. Import workflows from: ${GHOSTS_DIR}/GHOSTS/configuration/n8n-workflows/"
-echo "       Order: Connections → Preferences → Social Graph → Belief → Post to Social Media → Real-time Chat"
-echo "    4. In each workflow: change host.docker.internal → ${HOST_IP}"
-echo "    5. In each workflow: change Ollama model mistral:7b → qwen3.5:9b"
-echo "    6. Set Ollama credential in all Ollama nodes"
+echo "  n8n Workflow Setup:"
+echo "    Auto-import: config-repo/ghosts-config/scripts/setup-n8n.sh <API_KEY>"
+echo "    Manual:      Import from config-repo/ghosts-config/n8n-workflows/"
+echo "    API key:     Create at http://${HOST_IP}:${PORT_N8N} > Settings > API"
 echo ""
 echo "  ─── Air-Gapped Deployment ───"
 echo ""
