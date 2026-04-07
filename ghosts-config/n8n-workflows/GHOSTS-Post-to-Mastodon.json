@@ -25,7 +25,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "http://host.docker.internal:5000/api/npcs/list",
+        "url": "http://host.docker.internal:5000/api/npcs",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
