@@ -91,7 +91,7 @@
         "url": "http://host.docker.internal:11434/api/generate",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"qwen3.5:9b\", system: $json.systemPrompt || \"\", prompt: $json.prompt || \"\", stream: false, options: { temperature: 0.8, num_predict: 256 } }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: \"qwen3.5:9b\", system: $json.systemPrompt || \"\", prompt: $json.prompt || \"\", stream: false, options: { temperature: 0.8, num_predict: 1024 }, think: false }) }}",
         "options": {
           "timeout": 120000
         }
@@ -108,7 +108,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let TOKEN_MAP = {};\ntry { TOKEN_MAP = __NPC_TOKEN_MAP__; } catch(e) { /* tokens injected by setup script */ }\n\nconst ollamaResponse = $input.first().json.response || '';\nlet content = ollamaResponse.trim().replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\nif (content.length > 500) content = content.substring(0, 497) + '...';\n\nconst username = $('Loop Over Posts').item.json.username;\nconst token = TOKEN_MAP[username] || '';\n\nreturn [{ json: { username, content, token, posted: !!token && !!content } }];"
+        "jsCode": "let TOKEN_MAP = {};\ntry { TOKEN_MAP = __NPC_TOKEN_MAP__; } catch(e) { /* tokens injected by setup script */ }\n\nconst ollamaResponse = $input.first().json.response || $input.first().json.thinking || '';\nlet content = ollamaResponse.trim().replace(/<think>[\\s\\S]*?<\\/think>/g, '').trim();\nif (content.length > 500) content = content.substring(0, 497) + '...';\n\nconst username = $('Loop Over Posts').item.json.username;\nconst token = TOKEN_MAP[username] || '';\n\nreturn [{ json: { username, content, token, posted: !!token && !!content } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
