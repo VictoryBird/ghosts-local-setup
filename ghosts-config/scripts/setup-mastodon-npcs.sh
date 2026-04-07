@@ -21,6 +21,12 @@
 
 set -euo pipefail
 
+# Use sudo for docker if current user is not in docker group
+DOCKER_CMD="docker"
+if ! docker info &>/dev/null 2>&1; then
+    DOCKER_CMD="sudo docker"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MASTODON_DIR="${SCRIPT_DIR}/../mastodon"
 MASTODON_DOMAIN="${1:-meridianet.local}"
@@ -54,7 +60,7 @@ if ! curl -sf "${GHOSTS_API}/api/npcs" >/dev/null 2>&1; then
 fi
 
 if ! curl -sf http://localhost:8000/health >/dev/null 2>&1 && \
-   ! docker inspect --format='{{.State.Health.Status}}' mastodon-web 2>/dev/null | grep -q healthy; then
+   ! $DOCKER_CMD inspect --format='{{.State.Health.Status}}' mastodon-web 2>/dev/null | grep -q healthy; then
     echo "ERROR: mastodon-web container is not healthy."
     exit 1
 fi
@@ -117,7 +123,7 @@ create_account_and_token() {
 
     # Create account + generate token in a single Rails call
     local RESULT
-    RESULT=$(docker exec mastodon-web rails runner "
+    RESULT=$($DOCKER_CMD exec mastodon-web rails runner "
 account = Account.find_local('${username}')
 if account && account.user
   STDERR.puts 'ALREADY_EXISTS'
