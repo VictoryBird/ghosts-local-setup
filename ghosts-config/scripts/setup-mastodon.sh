@@ -151,28 +151,38 @@ done
 # -----------------------------------------------------------------------------
 echo "[7/7] Creating admin and configuring instance..."
 
-# Create admin account
-ADMIN_OUTPUT=$($COMPOSE_CMD -f docker-compose-mastodon.yml exec -T mastodon-web \
-    tootctl accounts create "$ADMIN_USER" \
-    --email "$ADMIN_EMAIL" \
-    --confirmed 2>&1) || true
-echo "  -> $ADMIN_OUTPUT"
-
-GENERATED_PASS=$(echo "$ADMIN_OUTPUT" | grep -oP 'New password: \K.*' || echo "check-logs")
-
-# Approve account
-$COMPOSE_CMD -f docker-compose-mastodon.yml exec -T mastodon-web \
-    tootctl accounts modify "$ADMIN_USER" --approve 2>&1 || true
-
-# Set admin role + open registrations + site title
+# Create admin account via Rails console (bypasses email domain validation)
+GENERATED_PASS=$(openssl rand -hex 12)
 $COMPOSE_CMD -f docker-compose-mastodon.yml exec -T mastodon-web \
     bin/rails runner "
+account = Account.find_local('${ADMIN_USER}')
+if account && account.user
+  puts 'Admin account already exists'
+else
+  account = Account.new(username: '${ADMIN_USER}')
+  account.display_name = 'GHOSTS Admin'
+  account.save!(validate: false)
+
+  user = User.new(
+    email: '${ADMIN_EMAIL}',
+    password: '${GENERATED_PASS}',
+    account: account,
+    confirmed_at: Time.now.utc,
+    approved: true,
+    agreement: true
+  )
+  user.save!(validate: false)
+  puts 'Admin account created'
+end
+
+# Set admin role
 u = User.find_by(email: '${ADMIN_EMAIL}')
 if u
   role = UserRole.find_by(name: 'Admin') || UserRole.find_by(id: 3)
   u.update!(role: role) if role
   puts 'Admin role set'
 end
+
 Setting.registrations_mode = 'open'
 Setting.site_title = 'MeridiaNet'
 Setting.site_short_description = 'Meridia Social Network'
