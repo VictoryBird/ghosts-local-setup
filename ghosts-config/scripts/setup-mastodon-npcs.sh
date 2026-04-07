@@ -53,7 +53,8 @@ if ! curl -sf "${GHOSTS_API}/api/npcs" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! docker exec mastodon-web curl -sf http://localhost:3000/health >/dev/null 2>&1; then
+if ! curl -sf http://localhost:8000/health >/dev/null 2>&1 && \
+   ! docker inspect --format='{{.State.Health.Status}}' mastodon-web 2>/dev/null | grep -q healthy; then
     echo "ERROR: mastodon-web container is not healthy."
     exit 1
 fi
