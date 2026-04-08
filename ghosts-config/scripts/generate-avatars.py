@@ -216,13 +216,13 @@ def extract_npc_info(npc):
         last = npc.get("lastName", "")
 
     full_name = f"{first} {last}".strip()
+    email = profile.get("email", npc.get("email", ""))
 
     # Derive username: first initial + last name, lowercase, alphanum only
     if first and last:
         username = (first[0] + last).lower().replace("'", "").replace(" ", "")
         username = "".join(c for c in username if c.isalnum() or c == "_")
     else:
-        email = profile.get("email", "")
         username = email.split("@")[0] if email else full_name.lower().replace(" ", ".")
 
     # Attributes (check npcProfile.attributes or top-level)
