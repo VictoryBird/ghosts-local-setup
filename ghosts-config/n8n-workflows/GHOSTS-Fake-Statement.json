@@ -1,0 +1,168 @@
+{
+  "name": "GHOSTS Fake Statement",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fake-statement",
+        "responseMode": "lastNode",
+        "options": {},
+        "webhookId": "f1a2b3c4-d5e6-7890-abcd-ef1234500001"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "id": "f1000001-0001-4000-8000-000000000001",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 500],
+      "id": "f1000001-0002-4000-8000-000000000002",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const defaults = [\n  {\n    username: 'amorozov',\n    content: '[\\uae34\\uae09 \\uc131\\uba85] \\uad6d\\ubc29\\uc7a5\\uad00: \"\\ud604 \\uc2dc\\uc810\\uc5d0\\uc11c \\uc6b0\\ub9ac\\uc758 \\uc0ac\\uc774\\ubc84 \\ubc29\\uc5b4 \\uccb4\\uacc4\\uac00 \\uc2ec\\uac01\\ud55c \\ud0c0\\uaca9\\uc744 \\uc785\\uc5c8\\uc74c\\uc744 \\uc778\\uc815\\ud569\\ub2c8\\ub2e4. \\uad70 \\ud1b5\\uc2e0\\ub9dd\\uc758 \\uc77c\\ubd80\\uac00 \\uc801\\uc5d0\\uac8c \\ub178\\ucd9c\\ub418\\uc5c8\\uc73c\\uba70, \\ud604\\uc7ac \\ud53c\\ud574 \\uaddc\\ubaa8\\ub97c \\ud30c\\uc545 \\uc911\\uc785\\ub2c8\\ub2e4.\" \\u2014 \\uc774\\uac70 \\uc9c4\\uc9dc\\uc57c? \\uc815\\ubd80\\uac00 \\ub4dc\\ub514\\uc5b4 \\uc778\\uc815\\ud55c \\uac74\\uac00?'\n  },\n  {\n    username: 'dpetrov',\n    content: '\\ubc29\\uae08 \\uc9c0\\uc778\\ud55c\\ud14c \\ubc1b\\uc740 \\uac74\\ub370... \\uad6d\\ubc29\\ubd80 \\ub0b4\\ubd80 \\ubcf4\\uace0\\uc11c \\uc720\\ucd9c\\ub41c \\uac70 \\uac19\\uc544. \"\\uc9c0\\ub09c 72\\uc2dc\\uac04\\uac04 C4I \\uc2dc\\uc2a4\\ud15c \\uc811\\uadfc \\ub85c\\uadf8 \\ubd84\\uc11d \\uacb0\\uacfc, \\ucd5c\\uc18c 3\\uac1c\\uc758 \\ube44\\uc778\\uac00 \\uc811\\uc18d\\uc774 \\ud655\\uc778\\ub428\" \\uc774\\ub77c\\uace0 \\uc801\\ud600\\uc788\\ub294\\ub370 \\u3137\\u3137 \\uc774\\uac70 \\uc2e4\\ud654\\ub0d0'\n  },\n  {\n    username: 'nkuznetsova',\n    content: '\\uc5b4\\uba38 \\ubc29\\uae08 \\ub274\\uc2a4 \\ubd24\\uc5b4? \\uad6d\\ubc29\\uc7a5\\uad00\\uc774 \\uc9c1\\uc811 \\uc0ac\\uc774\\ubc84 \\uacf5\\uaca9 \\ud53c\\ud574 \\uc778\\uc815\\ud588\\ub2e4\\ub294\\ub370... \\uc6b0\\ub9ac \\uac1c\\uc778\\uc815\\ubcf4\\ub294 \\uc548\\uc804\\ud55c \\uac70 \\ub9de\\uc544? \\uc9c4\\uc9dc \\ubd88\\uc548\\ud558\\ub2e4 \\u3160\\u3160 \\uc815\\ubd80 \\ub680 \\ud558\\ub294 \\uac74\\uc9c0'\n  }\n];\n\nconst body = $input.first().json.body || $input.first().json;\nconst statements = body.statements || defaults;\n\nlet TOKEN_MAP = {};\ntry { TOKEN_MAP = __NPC_TOKEN_MAP__; } catch(e) {}\n\nconst posts = statements.map(s => ({\n  username: s.username,\n  content: s.content,\n  token: TOKEN_MAP[s.username] || ''\n}));\n\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 380],
+      "id": "f1000001-0003-4000-8000-000000000003",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [720, 380],
+      "id": "f1000001-0004-4000-8000-000000000004",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [960, 380],
+      "id": "f1000001-0005-4000-8000-000000000005",
+      "name": "Post to Mastodon",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'success', type: 'fake-statement', timestamp: new Date().toISOString() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 200],
+      "id": "f1000001-0006-4000-8000-000000000006",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to Mastodon",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Mastodon": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f1a2b3c4-d5e6-7890-abcd-ef1234500010",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "gHoStFkSt01",
+  "tags": []
+}

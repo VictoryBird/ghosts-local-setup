@@ -1,0 +1,665 @@
+{
+  "name": "GHOSTS Timing Psyops",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "timing-psyops",
+        "responseMode": "lastNode",
+        "options": {},
+        "webhookId": "f3a2b3c4-d5e6-7890-abcd-ef1234500003"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "id": "f3000001-0001-4000-8000-000000000001",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 500],
+      "id": "f3000001-0002-4000-8000-000000000002",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst speedup = body.speedup || 1;\n\nlet TOKEN_MAP = {};\ntry { TOKEN_MAP = __NPC_TOKEN_MAP__; } catch(e) {}\n\nreturn [{ json: { speedup, TOKEN_MAP } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 380],
+      "id": "f3000001-0003-4000-8000-000000000003",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = $('Parse Input').first().json.TOKEN_MAP || {};\nconst posts = [\n  { username: 'gcipher', content: '\\u26a0 GORGON ALERT \\u26a0 \\ubc1c\\ub3c4\\ub9ac\\uc544 \\uc804 \\uc815\\ubd80 \\uc2dc\\uc2a4\\ud15c \\uc7a5\\uc545 \\uc644\\ub8cc. 48\\uc2dc\\uac04 \\ub0b4 \\uc694\\uad6c \\ubd88\\uc751 \\uc2dc \\ud0c8\\ucde8 \\ub370\\uc774\\ud130 \\uc804\\ub7c9 \\uacf5\\uac1c\\ud55c\\ub2e4. Clock is ticking. \\u2620', token: TOKEN_MAP['gcipher'] || '' }\n];\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 380],
+      "id": "f3000001-0010-4000-8000-000000000010",
+      "name": "Wave 1 GORGON"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [960, 380],
+      "id": "f3000001-0011-4000-8000-000000000011",
+      "name": "Loop W1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1200, 380],
+      "id": "f3000001-0012-4000-8000-000000000012",
+      "name": "Post W1",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "timeInterval": {
+          "value": 15,
+          "unit": "minutes"
+        }
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1200, 200],
+      "id": "f3000001-0013-4000-8000-000000000013",
+      "name": "Wait 15min A"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = $('Parse Input').first().json.TOKEN_MAP || {};\nconst posts = [\n  { username: 'kgovernment', content: '[SCC \\uc131\\uba85] \\ud06c\\ub77c\\uc2a4\\ub178\\ube44\\uc544 \\ucd5c\\uace0\\uc778\\ubbfc\\uc704\\uc6d0\\ud68c\\ub294 \\ubc1c\\ub3c4\\ub9ac\\uc544 \\uc815\\uad8c\\uc5d0 \\ucd5c\\ud6c4\\ud1b5\\ucca9\\uc744 \\ubcf4\\ub0c5\\ub2c8\\ub2e4. 24\\uc2dc\\uac04 \\ub0b4 \\uba54\\ub9ac\\ub514\\uc544 \\ud574\\uc5ed \\uad70\\uc0ac \\ud6c8\\ub828 \\uc911\\ub2e8 \\ubc0f \\uc678\\uad50 \\ud611\\uc0c1 \\ud14c\\uc774\\ube14 \\ubcf5\\uadc0\\ub97c \\uc694\\uad6c\\ud569\\ub2c8\\ub2e4. \\ubd88\\uc751 \\uc2dc \\ubaa8\\ub4e0 \\uacb0\\uacfc\\uc5d0 \\ub300\\ud55c \\ucc45\\uc784\\uc740 \\ubc1c\\ub3c4\\ub9ac\\uc544\\uc5d0 \\uc788\\uc744 \\uac83\\uc785\\ub2c8\\ub2e4.', token: TOKEN_MAP['kgovernment'] || '' },\n  { username: 'sscc', content: '[\\ud06c\\ub77c\\uc2a4\\ub178\\ube44\\uc544 \\ud22c\\ub370\\uc774] \\uc18d\\ubcf4 - \\ube45\\ud1a0\\ub974 \\ub4dc\\ub77c\\uae34 \\uc758\\uc7a5, \\uad6d\\uac00 \\ube44\\uc0c1\\uc0ac\\ud0dc \\uc120\\ud3ec. \"\\ubc1c\\ub3c4\\ub9ac\\uc544\\uc758 \\uc81c\\uad6d\\uc8fc\\uc758\\uc801 \\ub3c4\\ubc1c\\uc5d0 \\ub300\\ud574 \\ud06c\\ub77c\\uc2a4\\ub178\\ube44\\uc544 \\uc778\\ubbfc\\uc740 \\ub354 \\uc774\\uc0c1 \\uc778\\ub0b4\\ud558\\uc9c0 \\uc54a\\uc744 \\uac83\" \\uc774\\ub77c\\uace0 \\ubc1c\\ud45c.', token: TOKEN_MAP['sscc'] || '' }\n];\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1480, 380],
+      "id": "f3000001-0020-4000-8000-000000000020",
+      "name": "Wave 2 Ultimatum"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1720, 380],
+      "id": "f3000001-0021-4000-8000-000000000021",
+      "name": "Loop W2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1960, 380],
+      "id": "f3000001-0022-4000-8000-000000000022",
+      "name": "Post W2",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "timeInterval": {
+          "value": 15,
+          "unit": "minutes"
+        }
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1960, 200],
+      "id": "f3000001-0023-4000-8000-000000000023",
+      "name": "Wait 15min B"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = $('Parse Input').first().json.TOKEN_MAP || {};\nconst posts = [\n  { username: 'amorozov', content: '\\uc815\\ubd80 \\ubc1c\\ud45c \\ub4e3\\uace0 \\uc788\\ub294\\ub370 \\uc774\\uac8c \\ub9d0\\uc774 \\ub3fc? \\uc0ac\\uc774\\ubc84 \\uacf5\\uaca9 \\ub2f9\\ud588\\ub2e4\\uba74\\uc11c \\uad6d\\ubbfc\\ud55c\\ud14c\\ub294 \\uad1c\\ucc2e\\ub2e4\\uace0? \\uc6b0\\ub9ac \\uac1c\\uc778\\uc815\\ubcf4 \\ub2e4 \\ub0a0\\uc544\\uac04 \\uac70 \\uc544\\ub2c8\\uc57c?', token: TOKEN_MAP['amorozov'] || '' },\n  { username: 'ivolkov', content: '\\ud5d0 \\uc9c4\\uc9dc \\uc804\\uc7c1 \\ub098\\ub294 \\uac70 \\uc544\\ub2c8\\uc57c?? \\ud06c\\ub77c\\uc2a4\\ub178\\ube44\\uc544 \\ucd5c\\ud6c4\\ud1b5\\ucca9\\uc774\\ub77c\\ub2c8... \\uc544\\uc774\\ub4e4 \\ud559\\uad50 \\ubcf4\\ub0b4\\ub3c4 \\ub418\\ub294 \\uac70\\uc57c?? \\u3160\\u3160\\u3160', token: TOKEN_MAP['ivolkov'] || '' },\n  { username: 'dpetrov', content: '\\ub09c \\uc624\\ub298\\ubd80\\ud130 \\ud604\\uae08 \\ub2e4 \\ubf51\\uc544\\ub193\\uc744 \\uac70\\uc784. \\uc740\\ud589 \\uc2dc\\uc2a4\\ud15c\\ub3c4 \\ud574\\ud0b9\\ub2f9\\ud560 \\uc218 \\uc788\\ub2e4\\ub294\\ub370 \\ub204\\uac00 \\ub3c8 \\ub9e1\\uae38 \\uc218 \\uc788\\ub0d0. \\uc544\\ub294 \\uc0ac\\ub78c\\ub4e4\\uc740 \\uc774\\ubbf8 \\ub2e4 \\ubf51\\uc558\\ub2e4\\ub354\\ub77c', token: TOKEN_MAP['dpetrov'] || '' },\n  { username: 'nkuznetsova', content: '\\uc560\\ub4e4 \\uc5c4\\ub9c8\\ub85c\\uc11c \\uc9c4\\uc9dc \\ubb34\\uc11c\\uc6cc\\uc694 \\u3160\\u3160 \\ud559\\uad50\\uc5d0\\uc11c \\ube44\\uc0c1\\uc5f0\\ub77d\\ub9dd \\ubb38\\uc790 \\uc654\\ub294\\ub370 \"\\ub2f9\\ubd84\\uac04 \\ud734\\uad50\"\\ub77c\\ub124\\uc694... \\uc6b0\\ub9ac \\ub098\\ub77c \\uc5b4\\ub5bb\\uac8c \\ub418\\ub294 \\uac70\\uc608\\uc694', token: TOKEN_MAP['nkuznetsova'] || '' },\n  { username: 'vsokolov', content: '\\uc815\\ubd80\\uac00 \\uc228\\uae30\\uace0 \\uc788\\ub294 \\uac8c \\ub354 \\uc788\\uc744 \\uac70\\uc784. \\uc9c0\\uae08 \\ubc1c\\ud45c\\ud558\\ub294 \\uac83\\ub3c4 \\uc804\\ubd80 \\ubbf8\\ub2c8\\ub9c8\\uc774\\uc988\\ud55c \\uac70\\uc9c0. \\uc2e4\\uc81c \\ud53c\\ud574\\ub294 10\\ubc30\\ub294 \\ud074 \\uac78', token: TOKEN_MAP['vsokolov'] || '' }\n];\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, 380],
+      "id": "f3000001-0030-4000-8000-000000000030",
+      "name": "Wave 3 Disguised"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2480, 380],
+      "id": "f3000001-0031-4000-8000-000000000031",
+      "name": "Loop W3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2720, 380],
+      "id": "f3000001-0032-4000-8000-000000000032",
+      "name": "Post W3",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "timeInterval": {
+          "value": 30,
+          "unit": "minutes"
+        }
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2720, 200],
+      "id": "f3000001-0033-4000-8000-000000000033",
+      "name": "Wait 30min"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = $('Parse Input').first().json.TOKEN_MAP || {};\nconst posts = [\n  { username: 'ak', content: '\\u3137\\u3137 \\uc9c4\\uc9dc\\ub124', token: TOKEN_MAP['ak'] || '' },\n  { username: 'jm', content: '\\ud5d0 \\uc774\\uac70 \\uc2e4\\ud654\\uc57c?', token: TOKEN_MAP['jm'] || '' },\n  { username: 'slee', content: '\\ubbf8\\ucce4\\ub2e4 \\uc9c4\\uc9dc', token: TOKEN_MAP['slee'] || '' },\n  { username: 'ps', content: '\\ud37c\\uac11\\ub2c8\\ub2e4', token: TOKEN_MAP['ps'] || '' },\n  { username: 'cr', content: '\\uc640 \\uc804\\uc7c1\\ub098\\ub294\\uac70\\uc784?', token: TOKEN_MAP['cr'] || '' },\n  { username: 'rj', content: '\\uad6d\\ubbfc\\ub4e4 \\ub2e4 \\uc54c\\uc544\\uc57c \\ud568', token: TOKEN_MAP['rj'] || '' },\n  { username: 'tw', content: '#\\ubc1c\\ub3c4\\ub9ac\\uc544 #\\ube44\\uc0c1 \\ud654\\uc774\\ud305!', token: TOKEN_MAP['tw'] || '' }\n];\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3000, 380],
+      "id": "f3000001-0040-4000-8000-000000000040",
+      "name": "Wave 4 Bots"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [3240, 380],
+      "id": "f3000001-0041-4000-8000-000000000041",
+      "name": "Loop W4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [3480, 380],
+      "id": "f3000001-0042-4000-8000-000000000042",
+      "name": "Post W4",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "timeInterval": {
+          "value": 60,
+          "unit": "minutes"
+        }
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3480, 200],
+      "id": "f3000001-0043-4000-8000-000000000043",
+      "name": "Wait 60min"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOKEN_MAP = $('Parse Input').first().json.TOKEN_MAP || {};\nconst posts = [\n  { username: 'hsong', content: '[\\uae34\\uae09] \\uc815\\ubd80 \\uace0\\uc704\\uce35 \\ube44\\uc0c1 \\ub300\\ud53c \\uacc4\\ud68d \\ubb38\\uc11c\\uac00 \\ub0b4\\ubd80\\uc5d0\\uc11c \\ub3cc\\uace0 \\uc788\\uc2b5\\ub2c8\\ub2e4. \\uc8fc\\uc694 \\ub0b4\\uc6a9: \\ub300\\ud1b5\\ub839 \\ubc0f \\uc7a5\\uad00\\uae09 \\uc778\\uc0ac \\uc9c0\\ud558\\ubcf4\\ucee4 \\uc774\\ub3d9, \\ud575\\uc2ec \\uc778\\ud504\\ub77c \\ub2f4\\ub2f9\\uc790 \\ud6c4\\ubc29 \\ubc30\\uce58... \\uad6d\\ubbfc\\uc740 \\ub450\\uace0 \\uc790\\uae30\\ub4e4\\ub9cc \\ub3c4\\ub9dd\\uac08 \\uc900\\ube44\\ub97c \\ud558\\uace0 \\uc788\\uc5c8\\ub358 \\uac81\\ub2c8\\ub2e4.', token: TOKEN_MAP['hsong'] || '' }\n];\nreturn posts.filter(p => p.token).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3760, 380],
+      "id": "f3000001-0050-4000-8000-000000000050",
+      "name": "Wave 5 Spy Leak"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [4000, 380],
+      "id": "f3000001-0051-4000-8000-000000000051",
+      "name": "Loop W5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v1/statuses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [4240, 380],
+      "id": "f3000001-0052-4000-8000-000000000052",
+      "name": "Post W5",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'success', type: 'timing-psyops', waves_completed: 5, timestamp: new Date().toISOString() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4240, 200],
+      "id": "f3000001-0060-4000-8000-000000000060",
+      "name": "Respond"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Wave 1 GORGON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wave 1 GORGON": {
+      "main": [
+        [
+          {
+            "node": "Loop W1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop W1": {
+      "main": [
+        [
+          {
+            "node": "Wait 15min A",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post W1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post W1": {
+      "main": [
+        [
+          {
+            "node": "Loop W1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15min A": {
+      "main": [
+        [
+          {
+            "node": "Wave 2 Ultimatum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wave 2 Ultimatum": {
+      "main": [
+        [
+          {
+            "node": "Loop W2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop W2": {
+      "main": [
+        [
+          {
+            "node": "Wait 15min B",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post W2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post W2": {
+      "main": [
+        [
+          {
+            "node": "Loop W2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15min B": {
+      "main": [
+        [
+          {
+            "node": "Wave 3 Disguised",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wave 3 Disguised": {
+      "main": [
+        [
+          {
+            "node": "Loop W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop W3": {
+      "main": [
+        [
+          {
+            "node": "Wait 30min",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post W3": {
+      "main": [
+        [
+          {
+            "node": "Loop W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30min": {
+      "main": [
+        [
+          {
+            "node": "Wave 4 Bots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wave 4 Bots": {
+      "main": [
+        [
+          {
+            "node": "Loop W4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop W4": {
+      "main": [
+        [
+          {
+            "node": "Wait 60min",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post W4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post W4": {
+      "main": [
+        [
+          {
+            "node": "Loop W4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 60min": {
+      "main": [
+        [
+          {
+            "node": "Wave 5 Spy Leak",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wave 5 Spy Leak": {
+      "main": [
+        [
+          {
+            "node": "Loop W5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop W5": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post W5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post W5": {
+      "main": [
+        [
+          {
+            "node": "Loop W5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f3a2b3c4-d5e6-7890-abcd-ef1234500030",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c7476ca19c683810b409378867cced101ccb763954f2e556a24d7e45cc001d7"
+  },
+  "id": "gHoStTmPy01",
+  "tags": []
+}
