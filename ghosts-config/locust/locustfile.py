@@ -255,12 +255,6 @@ class WebTrafficUser(HttpUser):
 # Locust 이벤트: 설정값으로 유저 수/속도 자동 적용
 # ---------------------------------------------------------------------------
 
-@events.init_command_line_options.add_listener
-def on_init_options(parser, **kwargs):
-    """커맨드라인 기본값을 YAML 설정으로 오버라이드."""
-    pass
-
-
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
     """테스트 시작 시 정보 출력."""
