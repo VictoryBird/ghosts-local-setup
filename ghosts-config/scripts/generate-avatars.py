@@ -43,6 +43,23 @@ except ImportError:
 # Constants
 # ---------------------------------------------------------------------------
 
+# Organization/institutional accounts — use country logo instead of portrait
+# Maps username -> country (for logo lookup)
+ORGANIZATION_ACCOUNTS = {
+    "vgovernment": "valdoria",
+    "kgovernment": "krasnovia",
+    "sscc": "krasnovia",
+    "ktoday": "krasnovia",
+    "tgovernment": "tarvek",
+    "agovernment": "arventa",
+}
+
+# Keywords in NPC names that indicate an organization, not a person
+ORGANIZATION_KEYWORDS = [
+    "government", "command", "today", "ministry", "department",
+    "agency", "commission", "council", "bureau",
+]
+
 KOREAN_SURNAMES = [
     "Kim", "Park", "Lee", "Choi", "Jung", "Kang", "Cho", "Yoon", "Jang",
     "Lim", "Han", "Oh", "Seo", "Shin", "Kwon", "Hwang", "Ahn", "Song",
@@ -517,8 +534,27 @@ def process_npcs(args):
 
         # Determine generation method
         role_lower = (role or "").lower()
+        full_name_lower = info["full_name"].lower()
 
-        if role_lower == "bot":
+        # Check if this is an organization/institution account
+        is_org = username in ORGANIZATION_ACCOUNTS
+        if not is_org:
+            is_org = any(kw in full_name_lower for kw in ORGANIZATION_KEYWORDS)
+
+        if is_org:
+            # Use country logo as avatar
+            country = ORGANIZATION_ACCOUNTS.get(username, info["country"])
+            logo_path = os.path.join(os.path.dirname(output_dir), "logos", f"{country}.png")
+            if os.path.exists(logo_path):
+                import shutil
+                shutil.copy2(logo_path, avatar_path)
+                print(f"  [ORG] Using {country} logo as avatar")
+                generated += 1
+            else:
+                print(f"  [ORG] Logo not found: {logo_path}, generating geometric...")
+                generate_bot_avatar(username, avatar_path)
+                generated += 1
+        elif role_lower == "bot":
             print(f"  Generating geometric bot avatar...")
             generate_bot_avatar(username, avatar_path)
             generated += 1
