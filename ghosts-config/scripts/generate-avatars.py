@@ -120,7 +120,7 @@ def clothing_and_background(role):
     styles = {
         "official": {
             "clothing": "wearing a dark formal business suit with tie",
-            "background": "in a modern government office with blurred bookshelves and national flag in background",
+            "background": "in a modern government office with blurred bookshelves and wooden desk in background",
         },
         "military": {
             "clothing": "wearing a military uniform with insignia",
