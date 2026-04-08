@@ -641,7 +641,7 @@ def upload_existing_avatars(args):
     """Upload existing avatar images to Mastodon profiles."""
     output_dir = os.path.abspath(args.output_dir)
 
-    # Load tokens
+    # Load tokens — iterate directly over token file (avoids username derivation mismatch)
     token_file = os.path.abspath(args.token_file)
     if not os.path.exists(token_file):
         print(f"ERROR: Token file not found: {token_file}")
@@ -651,21 +651,13 @@ def upload_existing_avatars(args):
         tokens = json.load(f)
     print(f"Loaded {len(tokens)} Mastodon tokens from {token_file}")
 
-    # Fetch NPCs to get username mapping
-    npcs = fetch_npcs(args.ghosts_url)
-    if not npcs:
-        print("No NPCs found. Exiting.")
-        return
-
-    total = len(npcs)
+    usernames = sorted(tokens.keys())
+    total = len(usernames)
     uploaded = 0
     skipped = 0
     failed = 0
 
-    for i, npc in enumerate(npcs, 1):
-        info = extract_npc_info(npc)
-        username = info["username"]
-
+    for i, username in enumerate(usernames, 1):
         avatar_path = os.path.join(output_dir, f"{username}.png")
 
         print(f"[{i}/{total}] @{username}", end="")
@@ -673,12 +665,6 @@ def upload_existing_avatars(args):
         # Check avatar file exists
         if not os.path.exists(avatar_path):
             print(f" - [SKIP] No avatar file")
-            skipped += 1
-            continue
-
-        # Check token exists
-        if username not in tokens:
-            print(f" - [SKIP] No Mastodon token")
             skipped += 1
             continue
 
