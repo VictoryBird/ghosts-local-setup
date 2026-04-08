@@ -1,0 +1,30 @@
+# =============================================================================
+# Locust Docker Compose
+#
+# Usage:
+#   # Web UI 모드 (http://VM_IP:8089)
+#   docker compose -f docker-compose-locust.yaml up -d
+#
+#   # 특정 네트워크 지정
+#   LOCUST_NETWORK=network-b docker compose -f docker-compose-locust.yaml up -d
+#
+#   # 중지
+#   docker compose -f docker-compose-locust.yaml down
+# =============================================================================
+
+services:
+  locust:
+    build: .
+    container_name: locust
+    network_mode: host
+    environment:
+      - LOCUST_CONFIG=/mnt/locust/locust-targets.yaml
+      - LOCUST_NETWORK=${LOCUST_NETWORK:-}
+    volumes:
+      - ./locust-targets.yaml:/mnt/locust/locust-targets.yaml:ro
+      - ./locustfile.py:/mnt/locust/locustfile.py:ro
+    command: >
+      -f /mnt/locust/locustfile.py
+      --web-host 0.0.0.0
+      --web-port 8089
+    restart: unless-stopped
