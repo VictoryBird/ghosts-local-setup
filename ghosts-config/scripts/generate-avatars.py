@@ -634,6 +634,83 @@ def process_npcs(args):
 
 
 # ---------------------------------------------------------------------------
+# Upload-only mode
+# ---------------------------------------------------------------------------
+
+def upload_existing_avatars(args):
+    """Upload existing avatar images to Mastodon profiles."""
+    output_dir = os.path.abspath(args.output_dir)
+
+    # Load tokens
+    token_file = os.path.abspath(args.token_file)
+    if not os.path.exists(token_file):
+        print(f"ERROR: Token file not found: {token_file}")
+        sys.exit(1)
+
+    with open(token_file, "r") as f:
+        tokens = json.load(f)
+    print(f"Loaded {len(tokens)} Mastodon tokens from {token_file}")
+
+    # Fetch NPCs to get username mapping
+    npcs = fetch_npcs(args.ghosts_url)
+    if not npcs:
+        print("No NPCs found. Exiting.")
+        return
+
+    total = len(npcs)
+    uploaded = 0
+    skipped = 0
+    failed = 0
+
+    for i, npc in enumerate(npcs, 1):
+        info = extract_npc_info(npc)
+        username = info["username"]
+
+        avatar_path = os.path.join(output_dir, f"{username}.png")
+
+        print(f"[{i}/{total}] @{username}", end="")
+
+        # Check avatar file exists
+        if not os.path.exists(avatar_path):
+            print(f" - [SKIP] No avatar file")
+            skipped += 1
+            continue
+
+        # Check token exists
+        if username not in tokens:
+            print(f" - [SKIP] No Mastodon token")
+            skipped += 1
+            continue
+
+        token = tokens[username]
+        access_token = token if isinstance(token, str) else token.get("access_token", "")
+        if not access_token:
+            print(f" - [SKIP] Empty access token")
+            skipped += 1
+            continue
+
+        # Upload
+        print(f" - Uploading...", end="")
+        if upload_avatar_to_mastodon(args.mastodon_url, access_token, avatar_path):
+            uploaded += 1
+            print(f" [OK]")
+        else:
+            failed += 1
+            print(f" [FAIL]")
+
+        # Small delay to avoid rate limiting
+        time.sleep(0.3)
+
+    print("\n" + "=" * 60)
+    print(f" Mastodon Avatar Upload Complete")
+    print(f"  Total NPCs:  {total}")
+    print(f"  Uploaded:    {uploaded}")
+    print(f"  Skipped:     {skipped}")
+    print(f"  Failed:      {failed}")
+    print("=" * 60)
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -678,16 +755,23 @@ def main():
         action="store_true",
         help="Skip uploading avatars to Mastodon"
     )
+    parser.add_argument(
+        "--upload-only",
+        action="store_true",
+        help="Upload existing avatars to Mastodon without generating new ones"
+    )
 
     args = parser.parse_args()
 
-    if not args.api_key:
-        print("WARNING: No OpenAI API key provided.")
-        print("  Only geometric avatars will be generated for all NPCs.")
-        print("  Provide --api-key or set OPENAI_API_KEY to use DALL-E.")
-        print()
-
-    process_npcs(args)
+    if args.upload_only:
+        upload_existing_avatars(args)
+    else:
+        if not args.api_key:
+            print("WARNING: No OpenAI API key provided.")
+            print("  Only geometric avatars will be generated for all NPCs.")
+            print("  Provide --api-key or set OPENAI_API_KEY to use DALL-E.")
+            print()
+        process_npcs(args)
 
 
 if __name__ == "__main__":
