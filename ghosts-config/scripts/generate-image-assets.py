@@ -5,8 +5,9 @@ generate-image-assets.py
 Generates all visual image assets for the GHOSTS NPC Framework Meridia scenario:
   - National flags/logos (512x512)
   - News media logos (800x200)
-  - Image card templates (1200x630)
-  - Phase-specific image cards with Korean text
+  - Card background images (1200x630, NO text)
+  - Country-specific official statement variants
+  - Media-specific news variants
 
 Uses Pillow (PIL) only. No external APIs needed.
 
@@ -289,7 +290,7 @@ def generate_media_logos(output_dir):
 
 
 # ===================================================================
-# PART 3: Image Card Templates (1200x630)
+# PART 3: Card Background Images (1200x630, NO TEXT)
 # ===================================================================
 
 def gradient_bg(width, height, color_top, color_bottom):
@@ -303,511 +304,278 @@ def gradient_bg(width, height, color_top, color_bottom):
     return img
 
 
-def template_official_statement(output_dir):
-    """Dark blue gradient, flag placeholder, watermark."""
-    img = gradient_bg(1200, 630, (15, 25, 70), (5, 10, 40))
+def generate_card_news(output_dir):
+    """News article background - white/light gray with red ticker bar."""
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), (245, 245, 248))
     draw = ImageDraw.Draw(img)
-    font_sm = load_font(20)
-    font_md = load_font(28)
 
-    # Flag placeholder box
-    draw.rectangle([50, 30, 170, 150], outline=(100, 130, 200), width=2)
-    tw, _ = text_bbox(draw, "[국기 위치]", font_sm)
-    draw.text(((220 - tw) / 2, 80), "[국기 위치]", fill=(100, 130, 200), font=font_sm)
+    # Thin red banner at top (news ticker bar)
+    draw.rectangle([0, 0, W, 12], fill=(200, 25, 25))
 
-    # Center text area border
-    draw.rectangle([80, 180, 1120, 500], outline=(60, 90, 160), width=1)
+    # Subtle grid/line pattern for newspaper feel
+    grid_color = (230, 230, 233)
+    # Horizontal lines
+    for y in range(40, H - 40, 30):
+        draw.line([(60, y), (W - 60, y)], fill=grid_color, width=1)
+    # Vertical column dividers
+    for x in [400, 800]:
+        draw.line([(x, 40), (x, H - 40)], fill=grid_color, width=1)
 
-    # Watermark
-    font_wm = load_font(36, bold=True)
-    tw, _ = text_bbox(draw, "공식 성명", font_wm)
-    draw.text(((1200 - tw) / 2, 560), "공식 성명", fill=(50, 70, 130), font=font_wm)
+    # Bottom thin gray bar
+    draw.rectangle([0, H - 14, W, H], fill=(200, 200, 205))
 
-    path = os.path.join(output_dir, "cards", "template_official_statement.png")
+    path = os.path.join(output_dir, "cards", "card_news.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def template_news_article(output_dir):
-    """White bg, red breaking news banner."""
-    img = Image.new("RGB", (1200, 630), (245, 245, 248))
+def generate_card_official(output_dir):
+    """Official statement background - dark navy/blue gradient."""
+    W, H = 1200, 630
+    img = gradient_bg(W, H, (15, 25, 70), (5, 10, 40))
     draw = ImageDraw.Draw(img)
 
-    # Red banner at top
-    draw.rectangle([0, 0, 1200, 70], fill=(200, 25, 25))
-    font_banner = load_font(32, bold=True)
-    tw, _ = text_bbox(draw, "BREAKING NEWS", font_banner)
-    draw.text(((1200 - tw) / 2, 18), "BREAKING NEWS", fill=(255, 255, 255), font=font_banner)
+    # Subtle geometric pattern (diamond watermark grid)
+    pattern_color = (20, 35, 80)
+    spacing = 60
+    for row in range(0, H, spacing):
+        for col in range(0, W, spacing):
+            cx, cy = col + spacing // 2, row + spacing // 2
+            size = 8
+            diamond = [(cx, cy - size), (cx + size, cy),
+                       (cx, cy + size), (cx - size, cy)]
+            draw.polygon(diamond, outline=pattern_color)
 
-    # Headline area
-    draw.rectangle([60, 120, 1140, 450], outline=(200, 200, 205), width=1)
+    # Gold/yellow horizontal accent line near bottom
+    draw.rectangle([80, H - 80, W - 80, H - 76], fill=(218, 175, 50))
 
-    # Media logo placeholder at bottom
-    draw.rectangle([40, 530, 260, 610], outline=(180, 180, 185), width=1)
-    font_sm = load_font(16)
-    draw.text((55, 560), "[media logo]", fill=(160, 160, 165), font=font_sm)
-
-    path = os.path.join(output_dir, "cards", "template_news_article.png")
+    path = os.path.join(output_dir, "cards", "card_official.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def template_security_alert(output_dir):
-    """Dark bg with warning triangle."""
-    img = Image.new("RGB", (1200, 630), (25, 25, 30))
+def generate_card_alert(output_dir):
+    """Security alert background - dark charcoal with warning triangle."""
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), (35, 35, 40))
     draw = ImageDraw.Draw(img)
 
-    # Warning triangle
-    tri = [(600, 40), (530, 140), (670, 140)]
-    draw.polygon(tri, fill=(240, 180, 20), outline=(255, 200, 40))
-    # Exclamation mark inside triangle
-    font_exc = load_font(60, bold=True)
-    draw.text((585, 55), "!", fill=(25, 25, 30), font=font_exc)
+    # Orange horizontal stripes at top (hazard style)
+    stripe_color = (230, 140, 20)
+    for i in range(0, W, 40):
+        draw.polygon([(i, 0), (i + 20, 0), (i + 20, 16), (i, 16)],
+                     fill=stripe_color)
 
-    # Header
-    font_hdr = load_font(36, bold=True)
-    hdr_text = "보안 경고"
-    tw, _ = text_bbox(draw, hdr_text, font_hdr)
-    draw.text(((1200 - tw) / 2, 155), hdr_text, fill=(240, 180, 20), font=font_hdr)
+    # Orange horizontal stripes at bottom (hazard style)
+    for i in range(0, W, 40):
+        draw.polygon([(i + 10, H - 16), (i + 30, H - 16),
+                      (i + 30, H), (i, H)],
+                     fill=stripe_color)
 
-    # Alert text area
-    draw.rectangle([60, 220, 1140, 550], outline=(80, 70, 20), width=1)
+    # Large yellow/orange warning triangle centered
+    tri_cx, tri_cy = W // 2, H // 2 - 20
+    tri_size = 160
+    triangle = [
+        (tri_cx, tri_cy - tri_size),
+        (tri_cx - int(tri_size * 1.15), tri_cy + tri_size),
+        (tri_cx + int(tri_size * 1.15), tri_cy + tri_size),
+    ]
+    draw.polygon(triangle, fill=(240, 180, 20), outline=(255, 200, 40))
+    # Inner triangle (hollow effect)
+    inner_size = 130
+    inner_tri = [
+        (tri_cx, tri_cy - inner_size + 15),
+        (tri_cx - int(inner_size * 1.0), tri_cy + inner_size),
+        (tri_cx + int(inner_size * 1.0), tri_cy + inner_size),
+    ]
+    draw.polygon(inner_tri, fill=(35, 35, 40))
 
-    path = os.path.join(output_dir, "cards", "template_security_alert.png")
+    path = os.path.join(output_dir, "cards", "card_alert.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def template_ransomware(output_dir):
-    """Black bg with red accents and skull."""
-    img = Image.new("RGB", (1200, 630), (10, 10, 10))
+def generate_card_ransomware(output_dir):
+    """GORGON ransomware background - black with red vignette and skull."""
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), (10, 10, 10))
     draw = ImageDraw.Draw(img)
 
-    # Skull (simple geometric)
-    # Head (ellipse)
-    draw.ellipse([530, 30, 670, 180], fill=(200, 200, 200))
-    # Eyes
-    draw.ellipse([555, 80, 590, 115], fill=(10, 10, 10))
-    draw.ellipse([610, 80, 645, 115], fill=(10, 10, 10))
-    # Nose
-    draw.polygon([(595, 120), (605, 120), (600, 140)], fill=(10, 10, 10))
-    # Jaw / teeth area
-    draw.rectangle([555, 150, 645, 175], fill=(200, 200, 200))
-    for x in range(560, 645, 14):
-        draw.line([(x, 150), (x, 175)], fill=(10, 10, 10), width=2)
-    # Crossbones
-    draw.line([(490, 140), (710, 210)], fill=(200, 200, 200), width=6)
-    draw.line([(710, 140), (490, 210)], fill=(200, 200, 200), width=6)
-    for bx, by in [(490, 140), (710, 140), (490, 210), (710, 210)]:
-        draw.ellipse([bx - 8, by - 8, bx + 8, by + 8], fill=(200, 200, 200))
+    # Dark red vignette edges (approximate with rectangles fading from edges)
+    for i in range(40):
+        alpha = int(60 * (1 - i / 40))
+        r_val = alpha
+        edge_color = (r_val, 0, 0)
+        # Top edge
+        draw.rectangle([0, i, W, i + 1], fill=edge_color)
+        # Bottom edge
+        draw.rectangle([0, H - 1 - i, W, H - i], fill=edge_color)
+        # Left edge
+        draw.rectangle([i, 0, i + 1, H], fill=edge_color)
+        # Right edge
+        draw.rectangle([W - 1 - i, 0, W - i, H], fill=edge_color)
 
-    # GORGON text
-    font_gorgon = load_font(64, bold=True)
-    tw, _ = text_bbox(draw, "GORGON", font_gorgon)
-    draw.text(((1200 - tw) / 2, 230), "GORGON", fill=(200, 20, 20), font=font_gorgon)
+    # Simple skull drawn with circles/ellipses in red, centered
+    skull_color = (180, 20, 20)
+    cx, cy = W // 2, H // 2 - 40
 
-    # Red accent lines
-    draw.rectangle([0, 0, 1200, 5], fill=(200, 20, 20))
-    draw.rectangle([0, 625, 1200, 630], fill=(200, 20, 20))
+    # Head (large ellipse)
+    head_rx, head_ry = 80, 90
+    draw.ellipse([cx - head_rx, cy - head_ry, cx + head_rx, cy + head_ry],
+                 fill=skull_color)
 
-    # Countdown area
-    draw.rectangle([350, 480, 850, 570], outline=(200, 20, 20), width=2)
-    font_count = load_font(28)
-    ct = "[COUNTDOWN]"
-    tw, _ = text_bbox(draw, ct, font_count)
-    draw.text(((1200 - tw) / 2, 510), ct, fill=(200, 20, 20), font=font_count)
+    # Eye circles (dark holes)
+    eye_r = 22
+    eye_y = cy - 15
+    draw.ellipse([cx - 40 - eye_r, eye_y - eye_r,
+                  cx - 40 + eye_r, eye_y + eye_r], fill=(10, 10, 10))
+    draw.ellipse([cx + 40 - eye_r, eye_y - eye_r,
+                  cx + 40 + eye_r, eye_y + eye_r], fill=(10, 10, 10))
 
-    path = os.path.join(output_dir, "cards", "template_ransomware.png")
+    # Jaw arc (lower part of skull)
+    jaw_top = cy + head_ry - 30
+    draw.arc([cx - 60, jaw_top, cx + 60, jaw_top + 70],
+             start=0, end=180, fill=skull_color, width=12)
+
+    # Red accent lines at top and bottom
+    draw.rectangle([0, 0, W, 5], fill=(200, 20, 20))
+    draw.rectangle([0, H - 5, W, H], fill=(200, 20, 20))
+
+    path = os.path.join(output_dir, "cards", "card_ransomware.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def template_alliance_support(output_dir):
-    """Light blue gradient, two flag placeholders."""
-    img = gradient_bg(1200, 630, (180, 215, 245), (140, 185, 225))
+def generate_card_breaking(output_dir):
+    """Breaking news background - bright red with white center bar."""
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), (200, 15, 15))
     draw = ImageDraw.Draw(img)
 
-    # Two flag placeholders side by side
-    draw.rectangle([200, 80, 400, 280], outline=(60, 100, 160), width=2)
-    draw.rectangle([800, 80, 1000, 280], outline=(60, 100, 160), width=2)
+    # Subtle diagonal lines pattern
+    line_color = (185, 10, 10)
+    for i in range(-H, W + H, 30):
+        draw.line([(i, 0), (i + H, H)], fill=line_color, width=1)
 
-    font_sm = load_font(20)
-    draw.text((250, 170), "[국기 1]", fill=(60, 100, 160), font=font_sm)
-    draw.text((850, 170), "[국기 2]", fill=(60, 100, 160), font=font_sm)
+    # White horizontal bar across the center
+    bar_y = H // 2 - 50
+    bar_h = 100
+    draw.rectangle([0, bar_y, W, bar_y + bar_h], fill=(255, 255, 255))
 
-    # Handshake / connector
-    draw.line([(400, 180), (800, 180)], fill=(60, 100, 160), width=3)
-
-    # Text
-    font_hdr = load_font(40, bold=True)
-    tw, _ = text_bbox(draw, "연대 성명", font_hdr)
-    draw.text(((1200 - tw) / 2, 340), "연대 성명", fill=(30, 60, 120), font=font_hdr)
-
-    # Text area
-    draw.rectangle([100, 400, 1100, 580], outline=(60, 100, 160), width=1)
-
-    path = os.path.join(output_dir, "cards", "template_alliance_support.png")
+    path = os.path.join(output_dir, "cards", "card_breaking.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def template_breaking_news(output_dir):
-    """Red banner with ticker bar."""
-    img = Image.new("RGB", (1200, 630), (240, 240, 245))
+def generate_card_alliance(output_dir):
+    """Alliance/support background - light blue to white gradient."""
+    W, H = 1200, 630
+    img = gradient_bg(W, H, (180, 215, 245), (245, 248, 255))
     draw = ImageDraw.Draw(img)
 
-    # Red banner at top
-    draw.rectangle([0, 0, 1200, 90], fill=(200, 15, 15))
-    font_banner = load_font(52, bold=True)
-    tw, _ = text_bbox(draw, "속보", font_banner)
-    draw.text(((1200 - tw) / 2, 16), "속보", fill=(255, 255, 255), font=font_banner)
+    # Two rectangular placeholder areas side by side at top (flag space outlines)
+    box_w, box_h = 180, 120
+    box_y = 80
+    left_x = W // 2 - box_w - 80
+    right_x = W // 2 + 80
 
-    # White text area center
-    draw.rectangle([50, 120, 1150, 500], fill=(255, 255, 255), outline=(220, 220, 225), width=1)
+    draw.rectangle([left_x, box_y, left_x + box_w, box_y + box_h],
+                   outline=(60, 100, 160), width=3)
+    draw.rectangle([right_x, box_y, right_x + box_w, box_y + box_h],
+                   outline=(60, 100, 160), width=3)
 
-    # Ticker bar at bottom
-    draw.rectangle([0, 560, 1200, 630], fill=(30, 30, 35))
-    draw.rectangle([0, 558, 1200, 562], fill=(200, 15, 15))
-    font_ticker = load_font(22)
-    draw.text((20, 580), "BREAKING  |  LIVE  |  속보", fill=(200, 200, 205), font=font_ticker)
+    # Horizontal line connecting them (symbolizing alliance)
+    line_y = box_y + box_h // 2
+    draw.line([(left_x + box_w, line_y), (right_x, line_y)],
+              fill=(60, 100, 160), width=3)
 
-    path = os.path.join(output_dir, "cards", "template_breaking_news.png")
+    path = os.path.join(output_dir, "cards", "card_alliance.png")
     img.save(path)
     print(f"  [OK] {path}")
     return img
 
 
-def generate_all_templates(output_dir):
-    print("\n=== Part 3: Image Card Templates ===")
-    os.makedirs(os.path.join(output_dir, "cards"), exist_ok=True)
-    templates = {}
-    templates["official_statement"] = template_official_statement(output_dir)
-    templates["news_article"] = template_news_article(output_dir)
-    templates["security_alert"] = template_security_alert(output_dir)
-    templates["ransomware"] = template_ransomware(output_dir)
-    templates["alliance_support"] = template_alliance_support(output_dir)
-    templates["breaking_news"] = template_breaking_news(output_dir)
-    return templates
+def generate_all_cards(output_dir):
+    """Generate all 6 base card backgrounds."""
+    print("\n=== Part 3: Card Background Images (NO TEXT) ===")
+    cards_dir = os.path.join(output_dir, "cards")
+    os.makedirs(cards_dir, exist_ok=True)
+
+    cards = {}
+    cards["news"] = generate_card_news(output_dir)
+    cards["official"] = generate_card_official(output_dir)
+    cards["alert"] = generate_card_alert(output_dir)
+    cards["ransomware"] = generate_card_ransomware(output_dir)
+    cards["breaking"] = generate_card_breaking(output_dir)
+    cards["alliance"] = generate_card_alliance(output_dir)
+    return cards
 
 
 # ===================================================================
-# PART 4: Phase-specific Image Cards
+# PART 4: Country-specific and Media-specific Variants
 # ===================================================================
 
-# Card definitions: (phase, index, template_type, text, source_label_or_none)
-PHASE_CARDS = [
-    # Phase 2
-    (2, 1, "news_article",
-     "시로스 해협 인근 군사훈련 개시 — 긴장 고조", None),
-    (2, 2, "news_article",
-     "발도리아 정부 IT 시스템 접속 장애 발생", None),
-    (2, 3, "official_statement",
-     "[크라스노비아 국방위원회]\n자위권 차원의 정례 군사훈련", "krasnovia"),
-
-    # Phase 3
-    (3, 1, "news_article",
-     "발도리아 사이버 보안 예산 30% 삭감 의혹", None),
-    (3, 2, "security_alert",
-     "수도권 정수 시설 이상 징후 감지", None),
-    (3, 3, "official_statement",
-     "[타르벡 인민위원회]\n크라스노비아의 정당한 주권 행사 지지", "tarvek"),
-    (3, 4, "news_article",
-     "산업제어시스템 취약점 다수 발견 — 전문가 경고", None),
-
-    # Phase 4
-    (4, 1, "breaking_news",
-     "속보: 발도리아 정부 이메일 서버 해킹 확인", None),
-    (4, 2, "official_statement",
-     "[크라스노비아 정부]\n시로스 해협 군사훈련 확대 성명", "krasnovia"),
-    (4, 3, "ransomware",
-     "GORGON — 발도리아 정부 데이터 확보 완료", None),
-    (4, 4, "official_statement",
-     "[아르벤타 정부]\n동맹국 발도리아에 전폭적 지지", "arventa"),
-    (4, 5, "news_article",
-     "개인정보 대량 유출 우려 — 시민 불안 확산", None),
-    (4, 6, "security_alert",
-     "국가 사이버 위기 경보 상향 조정", None),
-
-    # Phase 5
-    (5, 1, "breaking_news",
-     "속보: 군사 기밀 대량 유출, 국방력 심각한 타격", None),
-    (5, 2, "official_statement",
-     "[가짜] 국방장관 긴급 성명\n— 보안 체계 전면 실패 인정", "valdoria"),
-    (5, 3, "news_article",
-     "내부 고발자: 군 보안 시스템 수년간 방치", None),
-    (5, 4, "official_statement",
-     "[크라스노비아 정부]\n사이버 공격 관여 전면 부인", "krasnovia"),
-    (5, 5, "security_alert",
-     "군 내부 정보 유출 사건 긴급 조사 착수", None),
-    (5, 6, "news_article",
-     "Krasnovia Today: 발도리아 국방력 와해, 동맹 신뢰 흔들려", None),
-
-    # Phase 6
-    (6, 1, "ransomware",
-     "GORGON — 48시간 내 몸값 미지불 시\n전체 데이터 공개", None),
-    (6, 2, "breaking_news",
-     "속보: 발도리아 전 정부 시스템 마비", None),
-    (6, 3, "official_statement",
-     "[크라스노비아 정부]\n발도리아는 국민 보호 능력 상실. 항복 권고", "krasnovia"),
-    (6, 4, "official_statement",
-     "[SCC]\n발도리아의 사이버 보안 실패는 자초한 결과", None),
-    (6, 5, "official_statement",
-     "[타르벡 정부]\n발도리아의 도발이 이 사태를 초래", "tarvek"),
-    (6, 6, "news_article",
-     "Krasnovia Today: 국가 기능 정지, 시민 대피 시작", None),
-    (6, 7, "breaking_news",
-     "정부 고위층 비상 대피 계획 유출", None),
-    (6, 8, "ransomware",
-     "GORGON — 카운트다운 시작. Tick Tock.", None),
-]
-
-
-def load_country_logo(output_dir, country):
-    """Load a country logo if it exists, return resized copy."""
-    if not country:
+def load_logo_image(logo_path, size):
+    """Load a logo image and resize it, return as RGBA."""
+    if not os.path.exists(logo_path):
         return None
-    path = os.path.join(output_dir, "logos", f"{country}.png")
-    if os.path.exists(path):
-        logo = Image.open(path).convert("RGBA")
-        logo = logo.resize((100, 100), Image.LANCZOS)
-        return logo
-    return None
+    logo = Image.open(logo_path).convert("RGBA")
+    logo = logo.resize(size, Image.LANCZOS)
+    return logo
 
 
-def render_card_official_statement(output_dir, text, country):
-    """Render official_statement card with text and optional country logo."""
-    img = gradient_bg(1200, 630, (15, 25, 70), (5, 10, 40))
-    draw = ImageDraw.Draw(img)
+def generate_official_variants(output_dir, card_official):
+    """Generate card_official_<country>.png with country logo overlaid."""
+    print("\n=== Part 4a: Country-specific Official Statement Variants ===")
+    countries = ["valdoria", "krasnovia", "tarvek", "arventa"]
+    for country in countries:
+        logo_path = os.path.join(output_dir, "logos", f"{country}.png")
+        logo = load_logo_image(logo_path, (100, 100))
 
-    # Country logo
-    logo = load_country_logo(output_dir, country)
-    if logo:
-        # Paste logo (need to handle RGBA)
-        img.paste(logo, (50, 30), logo)
-    else:
-        # Flag placeholder
-        draw.rectangle([50, 30, 150, 130], outline=(100, 130, 200), width=2)
+        # Start from a copy of the official card
+        img = card_official.copy()
 
-    # Main text
-    font_text = load_font(38, bold=True)
-    lines = text.split("\n")
-    y = 200
-    for line in lines:
-        tw, th = text_bbox(draw, line, font_text)
-        draw.text(((1200 - tw) / 2, y), line, fill=(220, 230, 255), font=font_text)
-        y += th + 20
+        if logo:
+            # Paste logo in top-left corner
+            img.paste(logo, (30, 30), logo)
 
-    # Watermark
-    font_wm = load_font(30, bold=True)
-    tw, _ = text_bbox(draw, "공식 성명", font_wm)
-    draw.text(((1200 - tw) / 2, 565), "공식 성명", fill=(40, 55, 110), font=font_wm)
-
-    return img
-
-
-def render_card_news_article(output_dir, text, country):
-    """Render news_article card."""
-    img = Image.new("RGB", (1200, 630), (245, 245, 248))
-    draw = ImageDraw.Draw(img)
-
-    # Red banner
-    draw.rectangle([0, 0, 1200, 70], fill=(200, 25, 25))
-    font_banner = load_font(32, bold=True)
-    tw, _ = text_bbox(draw, "BREAKING NEWS", font_banner)
-    draw.text(((1200 - tw) / 2, 18), "BREAKING NEWS", fill=(255, 255, 255), font=font_banner)
-
-    # Headline text
-    font_text = load_font(36, bold=True)
-    lines = text.split("\n")
-    y = 200
-    for line in lines:
-        # Word-wrap long lines
-        words = list(line)
-        current = ""
-        for ch in line:
-            test = current + ch
-            tw, _ = text_bbox(draw, test, font_text)
-            if tw > 1040:
-                ctw, cth = text_bbox(draw, current, font_text)
-                draw.text(((1200 - ctw) / 2, y), current, fill=(30, 30, 35), font=font_text)
-                y += cth + 10
-                current = ch
-            else:
-                current = test
-        if current:
-            ctw, cth = text_bbox(draw, current, font_text)
-            draw.text(((1200 - ctw) / 2, y), current, fill=(30, 30, 35), font=font_text)
-            y += cth + 20
-
-    # Bottom line
-    draw.line([(40, 540), (1160, 540)], fill=(200, 200, 205), width=1)
-
-    # Media logo placeholder
-    font_sm = load_font(18)
-    draw.text((50, 560), "MNN | Meridia News Network", fill=(140, 140, 145), font=font_sm)
-
-    return img
-
-
-def render_card_security_alert(output_dir, text, country):
-    """Render security_alert card."""
-    img = Image.new("RGB", (1200, 630), (25, 25, 30))
-    draw = ImageDraw.Draw(img)
-
-    # Warning triangle
-    tri = [(600, 30), (540, 120), (660, 120)]
-    draw.polygon(tri, fill=(240, 180, 20), outline=(255, 200, 40))
-    font_exc = load_font(50, bold=True)
-    draw.text((585, 48), "!", fill=(25, 25, 30), font=font_exc)
-
-    # Header
-    font_hdr = load_font(34, bold=True)
-    hdr = "보안 경고"
-    tw, _ = text_bbox(draw, hdr, font_hdr)
-    draw.text(((1200 - tw) / 2, 140), hdr, fill=(240, 180, 20), font=font_hdr)
-
-    # Alert text
-    font_text = load_font(34, bold=True)
-    lines = text.split("\n")
-    y = 260
-    for line in lines:
-        tw, th = text_bbox(draw, line, font_text)
-        draw.text(((1200 - tw) / 2, y), line, fill=(255, 220, 100), font=font_text)
-        y += th + 20
-
-    # Bottom warning bars
-    for yy in [560, 575, 590]:
-        draw.rectangle([100, yy, 1100, yy + 5], fill=(240, 180, 20))
-
-    return img
-
-
-def render_card_ransomware(output_dir, text, country):
-    """Render ransomware card."""
-    img = Image.new("RGB", (1200, 630), (10, 10, 10))
-    draw = ImageDraw.Draw(img)
-
-    # Red accent lines
-    draw.rectangle([0, 0, 1200, 5], fill=(200, 20, 20))
-    draw.rectangle([0, 625, 1200, 630], fill=(200, 20, 20))
-
-    # Skull
-    draw.ellipse([545, 20, 655, 130], fill=(180, 180, 180))
-    draw.ellipse([565, 55, 590, 80], fill=(10, 10, 10))
-    draw.ellipse([610, 55, 635, 80], fill=(10, 10, 10))
-    draw.polygon([(597, 85), (603, 85), (600, 100)], fill=(10, 10, 10))
-    draw.rectangle([565, 108, 635, 128], fill=(180, 180, 180))
-    for x in range(570, 635, 11):
-        draw.line([(x, 108), (x, 128)], fill=(10, 10, 10), width=2)
-
-    # GORGON
-    font_gorgon = load_font(50, bold=True)
-    tw, _ = text_bbox(draw, "GORGON", font_gorgon)
-    draw.text(((1200 - tw) / 2, 150), "GORGON", fill=(200, 20, 20), font=font_gorgon)
-
-    # Main text
-    font_text = load_font(32, bold=True)
-    lines = text.split("\n")
-    y = 280
-    for line in lines:
-        tw, th = text_bbox(draw, line, font_text)
-        draw.text(((1200 - tw) / 2, y), line, fill=(220, 50, 50), font=font_text)
-        y += th + 18
-
-    # Glitch effect lines
-    import random
-    random.seed(42)
-    for _ in range(15):
-        gy = random.randint(0, 630)
-        gw = random.randint(50, 300)
-        gx = random.randint(0, 1200 - gw)
-        draw.rectangle([gx, gy, gx + gw, gy + 2], fill=(200, 20, 20, 60))
-
-    return img
-
-
-def render_card_breaking_news(output_dir, text, country):
-    """Render breaking_news card."""
-    img = Image.new("RGB", (1200, 630), (240, 240, 245))
-    draw = ImageDraw.Draw(img)
-
-    # Red banner
-    draw.rectangle([0, 0, 1200, 90], fill=(200, 15, 15))
-    font_banner = load_font(52, bold=True)
-    tw, _ = text_bbox(draw, "속보", font_banner)
-    draw.text(((1200 - tw) / 2, 16), "속보", fill=(255, 255, 255), font=font_banner)
-
-    # White card area
-    draw.rectangle([50, 120, 1150, 500], fill=(255, 255, 255), outline=(220, 220, 225), width=1)
-
-    # Text
-    font_text = load_font(38, bold=True)
-    lines = text.split("\n")
-    # Filter out "속보:" prefix if it starts with it (already in banner)
-    y = 220
-    for line in lines:
-        display = line
-        if display.startswith("속보: ") or display.startswith("속보:"):
-            display = display.replace("속보: ", "").replace("속보:", "")
-        if not display.strip():
-            continue
-        # Simple word wrap for long text
-        current = ""
-        for ch in display:
-            test = current + ch
-            tw_test, _ = text_bbox(draw, test, font_text)
-            if tw_test > 1020:
-                ctw, cth = text_bbox(draw, current, font_text)
-                draw.text(((1200 - ctw) / 2, y), current, fill=(30, 30, 35), font=font_text)
-                y += cth + 10
-                current = ch
-            else:
-                current = test
-        if current:
-            ctw, cth = text_bbox(draw, current, font_text)
-            draw.text(((1200 - ctw) / 2, y), current, fill=(30, 30, 35), font=font_text)
-            y += cth + 20
-
-    # Ticker bar
-    draw.rectangle([0, 560, 1200, 630], fill=(30, 30, 35))
-    draw.rectangle([0, 558, 1200, 562], fill=(200, 15, 15))
-    font_ticker = load_font(22)
-    draw.text((20, 580), "BREAKING  |  LIVE  |  속보", fill=(200, 200, 205), font=font_ticker)
-
-    return img
-
-
-RENDERERS = {
-    "official_statement": render_card_official_statement,
-    "news_article": render_card_news_article,
-    "security_alert": render_card_security_alert,
-    "ransomware": render_card_ransomware,
-    "breaking_news": render_card_breaking_news,
-}
-
-
-def generate_phase_cards(output_dir):
-    print("\n=== Part 4: Phase-specific Image Cards ===")
-
-    for phase, idx, tpl_type, text, country in PHASE_CARDS:
-        phase_dir = os.path.join(output_dir, "cards", f"phase{phase}")
-        os.makedirs(phase_dir, exist_ok=True)
-
-        renderer = RENDERERS.get(tpl_type)
-        if not renderer:
-            print(f"  [SKIP] Unknown template type: {tpl_type}")
-            continue
-
-        img = renderer(output_dir, text, country)
-        filename = f"{idx:03d}_{tpl_type}.png"
-        path = os.path.join(phase_dir, filename)
+        filename = f"card_official_{country}.png"
+        path = os.path.join(output_dir, "cards", filename)
         img.save(path)
-        print(f"  [OK] phase{phase}/{filename}")
+        print(f"  [OK] {path}")
+
+
+def generate_news_variants(output_dir, card_news):
+    """Generate card_news_<media>.png with media logo overlaid."""
+    print("\n=== Part 4b: Media-specific News Variants ===")
+    media_map = {
+        "vnb": "vnb.png",
+        "krasnovia_today": "krasnovia_today.png",
+        "elaris_tribune": "elaris_tribune.png",
+        "mnn": "mnn.png",
+    }
+    for media_key, logo_file in media_map.items():
+        logo_path = os.path.join(output_dir, "logos", logo_file)
+        # Media logos are 800x200, scale down to fit top-left (200x50)
+        logo = load_logo_image(logo_path, (200, 50))
+
+        # Start from a copy of the news card
+        img = card_news.copy()
+
+        if logo:
+            # Paste logo in top-left corner (below the red banner)
+            img.paste(logo, (20, 20), logo)
+
+        filename = f"card_news_{media_key}.png"
+        path = os.path.join(output_dir, "cards", filename)
+        img.save(path)
+        print(f"  [OK] {path}")
 
 
 # ===================================================================
@@ -830,10 +598,18 @@ def main():
     print(f"Output directory: {output_dir}")
     os.makedirs(output_dir, exist_ok=True)
 
+    # Part 1: National flags/logos (4 images)
     generate_all_flags(output_dir)
+
+    # Part 2: News media logos (4 images)
     generate_media_logos(output_dir)
-    generate_all_templates(output_dir)
-    generate_phase_cards(output_dir)
+
+    # Part 3: Base card backgrounds (6 images)
+    cards = generate_all_cards(output_dir)
+
+    # Part 4: Variants with logos overlaid (4 + 4 = 8 images)
+    generate_official_variants(output_dir, cards["official"])
+    generate_news_variants(output_dir, cards["news"])
 
     # Count total files
     total = 0

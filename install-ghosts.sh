@@ -247,6 +247,7 @@ services:
       - N8N_SECURE_COOKIE=false
     volumes:
       - ghosts-n8n-data:/home/node/.n8n
+      - \${GHOSTS_DIR}/config-repo/ghosts-config/image-assets:/home/node/image-assets:ro
     restart: unless-stopped
 
   # === Grafana (Dashboards) ===

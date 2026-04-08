@@ -11,7 +11,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [200, 300],
+      "position": [
+        200,
+        300
+      ],
       "id": "f1000001-0001-4000-8000-000000000001",
       "name": "Webhook"
     },
@@ -19,7 +22,10 @@
       "parameters": {},
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [200, 500],
+      "position": [
+        200,
+        500
+      ],
       "id": "f1000001-0002-4000-8000-000000000002",
       "name": "Manual Trigger"
     },
@@ -29,7 +35,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [480, 380],
+      "position": [
+        480,
+        380
+      ],
       "id": "f1000001-0003-4000-8000-000000000003",
       "name": "Parse Input"
     },
@@ -41,7 +50,10 @@
       },
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
-      "position": [720, 380],
+      "position": [
+        720,
+        380
+      ],
       "id": "f1000001-0004-4000-8000-000000000004",
       "name": "Loop Over Items"
     },
@@ -64,7 +76,11 @@
           "parameters": [
             {
               "name": "status",
-              "value": "={{ $json.content }}"
+              "value": "={{ $json.content || $('Prepare Mastodon Post').first().json.content || '' }}"
+            },
+            {
+              "name": "media_ids[]",
+              "value": "={{ $json.id || '' }}"
             }
           ]
         },
@@ -72,7 +88,10 @@
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
-      "position": [960, 380],
+      "position": [
+        960,
+        380
+      ],
       "id": "f1000001-0005-4000-8000-000000000005",
       "name": "Post to Mastodon",
       "continueOnFail": true
@@ -83,7 +102,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 200],
+      "position": [
+        960,
+        200
+      ],
       "id": "f1000001-0006-4000-8000-000000000006",
       "name": "Respond"
     }

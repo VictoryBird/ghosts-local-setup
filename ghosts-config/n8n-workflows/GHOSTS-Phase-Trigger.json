@@ -138,7 +138,11 @@
           "parameters": [
             {
               "name": "status",
-              "value": "={{ $json.content }}"
+              "value": "={{ $json.content || $('Prepare Mastodon Post').first().json.content || '' }}"
+            },
+            {
+              "name": "media_ids[]",
+              "value": "={{ $json.id || '' }}"
             }
           ]
         },
