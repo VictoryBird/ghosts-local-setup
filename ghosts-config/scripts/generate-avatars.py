@@ -683,7 +683,7 @@ def upload_existing_avatars(args):
             continue
 
         token = tokens[username]
-        access_token = token if isinstance(token, str) else token.get("access_token", "")
+        access_token = token if isinstance(token, str) else (token.get("token") or token.get("access_token", ""))
         if not access_token:
             print(f" - [SKIP] Empty access token")
             skipped += 1
