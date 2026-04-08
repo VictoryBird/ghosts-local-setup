@@ -305,25 +305,75 @@ def gradient_bg(width, height, color_top, color_bottom):
 
 
 def generate_card_news(output_dir):
-    """News article background - white/light gray with red ticker bar."""
+    """News broadcast background - CNN/BBC breaking news screen style."""
     W, H = 1200, 630
-    img = Image.new("RGB", (W, H), (245, 245, 248))
+    # Dark blue/navy gradient background
+    img = gradient_bg(W, H, (12, 30, 80), (5, 15, 50))
     draw = ImageDraw.Draw(img)
 
-    # Thin red banner at top (news ticker bar)
-    draw.rectangle([0, 0, W, 12], fill=(200, 25, 25))
+    # World map watermark - draw simple continent outlines with circles/dots
+    map_color = (18, 40, 95)
+    import random
+    rng = random.Random(42)  # deterministic
+    # Scattered dots suggesting a world map
+    for _ in range(300):
+        x = rng.randint(50, W - 50)
+        y = rng.randint(80, H - 80)
+        sz = rng.randint(1, 3)
+        draw.ellipse([x, y, x + sz, y + sz], fill=map_color)
+    # Globe circle outlines (watermark)
+    for r in [120, 160, 200]:
+        draw.ellipse([W // 2 - r, H // 2 - r, W // 2 + r, H // 2 + r],
+                     outline=(15, 35, 90), width=1)
+    # Latitude/longitude lines through globe
+    for offset in [-80, -40, 0, 40, 80]:
+        draw.line([(W // 2 - 200, H // 2 + offset), (W // 2 + 200, H // 2 + offset)],
+                  fill=(15, 35, 90), width=1)
+        draw.ellipse([W // 2 - 50 + offset, H // 2 - 200,
+                      W // 2 + 50 + offset, H // 2 + 200],
+                     outline=(15, 35, 90), width=1)
 
-    # Subtle grid/line pattern for newspaper feel
-    grid_color = (230, 230, 233)
-    # Horizontal lines
-    for y in range(40, H - 40, 30):
-        draw.line([(60, y), (W - 60, y)], fill=grid_color, width=1)
-    # Vertical column dividers
-    for x in [400, 800]:
-        draw.line([(x, 40), (x, H - 40)], fill=grid_color, width=1)
+    # Large red header bar across the top
+    draw.rectangle([0, 0, W, 70], fill=(200, 20, 25))
+    # "BREAKING NEWS" text in the header bar
+    font_header = load_font(42, bold=True)
+    tw, th = text_bbox(draw, "BREAKING NEWS", font_header)
+    draw.text(((W - tw) / 2, (70 - th) / 2), "BREAKING NEWS",
+              fill=(255, 255, 255), font=font_header)
 
-    # Bottom thin gray bar
-    draw.rectangle([0, H - 14, W, H], fill=(200, 200, 205))
+    # Thin white separator lines
+    draw.rectangle([0, 70, W, 73], fill=(60, 100, 180))
+    draw.rectangle([0, 73, W, 74], fill=(255, 255, 255))
+
+    # Horizontal info bars at different levels
+    draw.rectangle([0, 76, W, 78], fill=(40, 70, 140))
+
+    # Bottom ticker bar
+    draw.rectangle([0, H - 60, W, H], fill=(20, 20, 25))
+    draw.rectangle([0, H - 62, W, H - 60], fill=(200, 20, 25))
+    draw.rectangle([0, H - 63, W, H - 62], fill=(255, 255, 255))
+    # Ticker dots
+    font_ticker = load_font(18)
+    for i in range(12):
+        x = 30 + i * 100
+        draw.rectangle([x, H - 48, x + 60, H - 46], fill=(80, 80, 90))
+    # "LIVE" indicator in red box
+    draw.rectangle([W - 120, H - 55, W - 30, H - 30], fill=(200, 20, 25))
+    font_live = load_font(18, bold=True)
+    draw.text((W - 105, H - 53), "LIVE", fill=(255, 255, 255), font=font_live)
+
+    # Side info panel accent lines
+    draw.rectangle([0, 80, 4, H - 65], fill=(200, 20, 25))
+    draw.rectangle([W - 4, 80, W, H - 65], fill=(30, 60, 130))
+
+    # Thin horizontal separator lines in the content area
+    for y in range(130, H - 80, 60):
+        draw.line([(40, y), (W - 40, y)], fill=(20, 40, 100), width=1)
+
+    # Small decorative rectangles (data readout feel)
+    for y in range(140, H - 90, 60):
+        draw.rectangle([50, y + 5, 90, y + 8], fill=(40, 80, 160))
+        draw.rectangle([100, y + 5, 180, y + 8], fill=(30, 60, 130))
 
     path = os.path.join(output_dir, "cards", "card_news.png")
     img.save(path)
@@ -332,24 +382,75 @@ def generate_card_news(output_dir):
 
 
 def generate_card_official(output_dir):
-    """Official statement background - dark navy/blue gradient."""
+    """Government official statement - presidential/formal style."""
     W, H = 1200, 630
-    img = gradient_bg(W, H, (15, 25, 70), (5, 10, 40))
+    # Dark navy to black gradient
+    img = gradient_bg(W, H, (10, 20, 55), (3, 5, 20))
     draw = ImageDraw.Draw(img)
 
-    # Subtle geometric pattern (diamond watermark grid)
-    pattern_color = (20, 35, 80)
-    spacing = 60
-    for row in range(0, H, spacing):
-        for col in range(0, W, spacing):
-            cx, cy = col + spacing // 2, row + spacing // 2
-            size = 8
-            diamond = [(cx, cy - size), (cx + size, cy),
-                       (cx, cy + size), (cx - size, cy)]
-            draw.polygon(diamond, outline=pattern_color)
+    # Seal/watermark pattern in background - repeating small diamonds
+    pattern_color = (15, 25, 60)
+    for row in range(0, H, 30):
+        for col in range(0, W, 30):
+            cx, cy = col + 15, row + 15
+            sz = 5
+            draw.polygon([(cx, cy - sz), (cx + sz, cy),
+                          (cx, cy + sz), (cx - sz, cy)], outline=pattern_color)
 
-    # Gold/yellow horizontal accent line near bottom
-    draw.rectangle([80, H - 80, W - 80, H - 76], fill=(218, 175, 50))
+    gold = (218, 175, 50)
+    gold_dim = (140, 110, 30)
+
+    # Large gold decorative double-line border frame (all 4 sides)
+    # Outer border
+    draw.rectangle([20, 20, W - 20, H - 20], outline=gold, width=3)
+    # Inner border
+    draw.rectangle([32, 32, W - 32, H - 32], outline=gold_dim, width=2)
+    # Corner accents (small squares at corners)
+    for cx, cy in [(20, 20), (W - 20, 20), (20, H - 20), (W - 20, H - 20)]:
+        draw.rectangle([cx - 8, cy - 8, cx + 8, cy + 8], fill=gold)
+
+    # Gold horizontal lines above and below center emblem area
+    draw.rectangle([80, 180, W - 80, 183], fill=gold)
+    draw.rectangle([80, 450, W - 80, 453], fill=gold)
+    # Thinner accent lines
+    draw.rectangle([120, 175, W - 120, 176], fill=gold_dim)
+    draw.rectangle([120, 456, W - 120, 457], fill=gold_dim)
+
+    # Centered gold emblem: large shield shape
+    cx, cy = W // 2, H // 2
+    # Shield outline
+    shield = [
+        (cx - 80, cy - 100), (cx + 80, cy - 100),
+        (cx + 95, cy - 70), (cx + 95, cy + 40),
+        (cx, cy + 110),
+        (cx - 95, cy + 40), (cx - 95, cy - 70),
+    ]
+    draw.polygon(shield, fill=(20, 35, 70), outline=gold, width=3)
+    # Inner shield border
+    inner_shield = [
+        (cx - 65, cy - 85), (cx + 65, cy - 85),
+        (cx + 78, cy - 58), (cx + 78, cy + 30),
+        (cx, cy + 92),
+        (cx - 78, cy + 30), (cx - 78, cy - 58),
+    ]
+    draw.polygon(inner_shield, outline=gold_dim, width=2)
+
+    # Star in center of shield
+    draw_star(draw, cx, cy - 15, 40, 18, 5, fill=gold)
+
+    # "OFFICIAL STATEMENT" text below the shield
+    font_title = load_font(28, bold=True)
+    tw, th = text_bbox(draw, "OFFICIAL STATEMENT", font_title)
+    draw.text(((W - tw) / 2, 468), "OFFICIAL STATEMENT", fill=gold, font=font_title)
+
+    # Decorative gold dots along the top and bottom horizontal lines
+    for x in range(100, W - 100, 40):
+        draw.ellipse([x - 2, 177, x + 2, 181], fill=gold)
+        draw.ellipse([x - 2, 452, x + 2, 456], fill=gold)
+
+    # Vertical gold accent lines on sides
+    draw.rectangle([50, 50, 53, H - 50], fill=gold_dim)
+    draw.rectangle([W - 53, 50, W - 50, H - 50], fill=gold_dim)
 
     path = os.path.join(output_dir, "cards", "card_official.png")
     img.save(path)
@@ -358,40 +459,91 @@ def generate_card_official(output_dir):
 
 
 def generate_card_alert(output_dir):
-    """Security alert background - dark charcoal with warning triangle."""
+    """Security alert/warning - military/CERT warning screen."""
     W, H = 1200, 630
-    img = Image.new("RGB", (W, H), (35, 35, 40))
+    # Dark background with orange/amber gradient at edges
+    img = Image.new("RGB", (W, H), (25, 20, 15))
     draw = ImageDraw.Draw(img)
 
-    # Orange horizontal stripes at top (hazard style)
-    stripe_color = (230, 140, 20)
-    for i in range(0, W, 40):
-        draw.polygon([(i, 0), (i + 20, 0), (i + 20, 16), (i, 16)],
-                     fill=stripe_color)
+    # Orange/amber vignette at edges
+    for i in range(80):
+        intensity = int(60 * (1 - i / 80))
+        edge_color = (intensity, int(intensity * 0.5), 0)
+        draw.rectangle([0, i, W, i + 1], fill=edge_color)
+        draw.rectangle([0, H - 1 - i, W, H - i], fill=edge_color)
+        draw.rectangle([i, 0, i + 1, H], fill=edge_color)
+        draw.rectangle([W - 1 - i, 0, W - i, H], fill=edge_color)
 
-    # Orange horizontal stripes at bottom (hazard style)
-    for i in range(0, W, 40):
-        draw.polygon([(i + 10, H - 16), (i + 30, H - 16),
-                      (i + 30, H), (i, H)],
-                     fill=stripe_color)
+    orange = (230, 140, 20)
+    black = (15, 12, 8)
 
-    # Large yellow/orange warning triangle centered
-    tri_cx, tri_cy = W // 2, H // 2 - 20
-    tri_size = 160
+    # Diagonal hazard stripes across top bar
+    bar_h = 45
+    draw.rectangle([0, 0, W, bar_h], fill=black)
+    stripe_w = 30
+    for i in range(-bar_h, W + bar_h, stripe_w * 2):
+        draw.polygon([(i, 0), (i + stripe_w, 0),
+                      (i + stripe_w + bar_h, bar_h), (i + bar_h, bar_h)],
+                     fill=orange)
+
+    # Diagonal hazard stripes across bottom bar
+    draw.rectangle([0, H - bar_h, W, H], fill=black)
+    for i in range(-bar_h, W + bar_h, stripe_w * 2):
+        draw.polygon([(i, H - bar_h), (i + stripe_w, H - bar_h),
+                      (i + stripe_w + bar_h, H), (i + bar_h, H)],
+                     fill=orange)
+
+    # "SECURITY ALERT" text at top in orange
+    font_alert = load_font(36, bold=True)
+    alert_text = "SECURITY ALERT"
+    tw, th = text_bbox(draw, alert_text, font_alert)
+    # Black backing rectangle for text
+    text_y = bar_h + 12
+    draw.rectangle([W // 2 - tw // 2 - 20, text_y - 4,
+                    W // 2 + tw // 2 + 20, text_y + th + 8], fill=(20, 15, 10))
+    draw.text(((W - tw) / 2, text_y), alert_text, fill=orange, font=font_alert)
+
+    # Concentric circles (pulsing effect) around center
+    ccx, ccy = W // 2, H // 2 + 15
+    for r in [200, 170, 140, 110]:
+        draw.ellipse([ccx - r, ccy - r, ccx + r, ccy + r],
+                     outline=(80, 50, 10), width=1)
+    for r in [185, 155, 125]:
+        draw.ellipse([ccx - r, ccy - r, ccx + r, ccy + r],
+                     outline=(50, 30, 5), width=1)
+
+    # Large warning triangle in center
+    tri_cx, tri_cy = ccx, ccy - 10
+    tri_size = 130
     triangle = [
         (tri_cx, tri_cy - tri_size),
         (tri_cx - int(tri_size * 1.15), tri_cy + tri_size),
         (tri_cx + int(tri_size * 1.15), tri_cy + tri_size),
     ]
-    draw.polygon(triangle, fill=(240, 180, 20), outline=(255, 200, 40))
-    # Inner triangle (hollow effect)
-    inner_size = 130
+    draw.polygon(triangle, fill=(240, 160, 20), outline=(255, 200, 40), width=3)
+    # Inner triangle (dark fill for contrast)
+    inner_size = 105
+    inner_offset = 20
     inner_tri = [
-        (tri_cx, tri_cy - inner_size + 15),
+        (tri_cx, tri_cy - inner_size + inner_offset),
         (tri_cx - int(inner_size * 1.0), tri_cy + inner_size),
         (tri_cx + int(inner_size * 1.0), tri_cy + inner_size),
     ]
-    draw.polygon(inner_tri, fill=(35, 35, 40))
+    draw.polygon(inner_tri, fill=(30, 25, 10))
+
+    # Exclamation mark inside triangle (rectangle + circle)
+    bang_x = tri_cx
+    bang_top = tri_cy - 30
+    # Vertical bar of !
+    draw.rectangle([bang_x - 10, bang_top, bang_x + 10, bang_top + 100],
+                   fill=(240, 160, 20))
+    # Dot of !
+    draw.ellipse([bang_x - 12, bang_top + 115, bang_x + 12, bang_top + 139],
+                 fill=(240, 160, 20))
+
+    # Side accent lines
+    draw.rectangle([8, bar_h + 5, 12, H - bar_h - 5], fill=orange)
+    draw.rectangle([W - 12, bar_h + 5, W - 8, H - bar_h - 5], fill=orange)
 
     path = os.path.join(output_dir, "cards", "card_alert.png")
     img.save(path)
@@ -400,50 +552,103 @@ def generate_card_alert(output_dir):
 
 
 def generate_card_ransomware(output_dir):
-    """GORGON ransomware background - black with red vignette and skull."""
+    """GORGON ransomware background - hacker lock screen aesthetic."""
     W, H = 1200, 630
-    img = Image.new("RGB", (W, H), (10, 10, 10))
+    img = Image.new("RGB", (W, H), (0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Dark red vignette edges (approximate with rectangles fading from edges)
-    for i in range(40):
-        alpha = int(60 * (1 - i / 40))
-        r_val = alpha
-        edge_color = (r_val, 0, 0)
-        # Top edge
-        draw.rectangle([0, i, W, i + 1], fill=edge_color)
-        # Bottom edge
-        draw.rectangle([0, H - 1 - i, W, H - i], fill=edge_color)
-        # Left edge
-        draw.rectangle([i, 0, i + 1, H], fill=edge_color)
-        # Right edge
-        draw.rectangle([W - 1 - i, 0, W - i, H], fill=edge_color)
+    import random
+    rng = random.Random(99)
 
-    # Simple skull drawn with circles/ellipses in red, centered
-    skull_color = (180, 20, 20)
-    cx, cy = W // 2, H // 2 - 40
+    # Matrix-style falling green characters scattered across background
+    matrix_chars = "01ABCDEFabcdef@#$%^&*{}[]<>/?|"
+    font_matrix = load_font(14)
+    for _ in range(500):
+        x = rng.randint(0, W)
+        y = rng.randint(0, H)
+        ch = rng.choice(matrix_chars)
+        brightness = rng.randint(20, 120)
+        draw.text((x, y), ch, fill=(0, brightness, 0), font=font_matrix)
 
-    # Head (large ellipse)
-    head_rx, head_ry = 80, 90
+    # Red scan lines effect across entire image
+    for y in range(0, H, 4):
+        draw.line([(0, y), (W, y)], fill=(30, 0, 0), width=1)
+
+    # Red border frame
+    border_w = 4
+    draw.rectangle([0, 0, W - 1, H - 1], outline=(200, 0, 0), width=border_w)
+    draw.rectangle([border_w + 2, border_w + 2,
+                    W - border_w - 3, H - border_w - 3],
+                   outline=(120, 0, 0), width=1)
+
+    # Large red skull in center
+    skull_color = (200, 15, 15)
+    skull_dark = (0, 0, 0)
+    cx, cy = W // 2, H // 2 - 60
+
+    # Head (large ellipse) - bigger: 120x130
+    head_rx, head_ry = 120, 130
     draw.ellipse([cx - head_rx, cy - head_ry, cx + head_rx, cy + head_ry],
                  fill=skull_color)
+    # Slight highlight on top of skull
+    draw.ellipse([cx - 90, cy - head_ry + 10, cx + 90, cy - 20],
+                 fill=(220, 25, 25))
 
-    # Eye circles (dark holes)
-    eye_r = 22
-    eye_y = cy - 15
-    draw.ellipse([cx - 40 - eye_r, eye_y - eye_r,
-                  cx - 40 + eye_r, eye_y + eye_r], fill=(10, 10, 10))
-    draw.ellipse([cx + 40 - eye_r, eye_y - eye_r,
-                  cx + 40 + eye_r, eye_y + eye_r], fill=(10, 10, 10))
+    # Eye sockets (large dark holes)
+    eye_r = 32
+    eye_y = cy - 20
+    # Left eye
+    draw.ellipse([cx - 52 - eye_r, eye_y - eye_r,
+                  cx - 52 + eye_r, eye_y + eye_r], fill=skull_dark)
+    # Right eye
+    draw.ellipse([cx + 52 - eye_r, eye_y - eye_r,
+                  cx + 52 + eye_r, eye_y + eye_r], fill=skull_dark)
+    # Red glow inside eyes
+    glow_r = 10
+    draw.ellipse([cx - 52 - glow_r, eye_y - glow_r,
+                  cx - 52 + glow_r, eye_y + glow_r], fill=(255, 0, 0))
+    draw.ellipse([cx + 52 - glow_r, eye_y - glow_r,
+                  cx + 52 + glow_r, eye_y + glow_r], fill=(255, 0, 0))
 
-    # Jaw arc (lower part of skull)
-    jaw_top = cy + head_ry - 30
-    draw.arc([cx - 60, jaw_top, cx + 60, jaw_top + 70],
-             start=0, end=180, fill=skull_color, width=12)
+    # Nose (inverted triangle hole)
+    nose_y = cy + 25
+    draw.polygon([(cx - 15, nose_y), (cx + 15, nose_y), (cx, nose_y + 25)],
+                 fill=skull_dark)
 
-    # Red accent lines at top and bottom
-    draw.rectangle([0, 0, W, 5], fill=(200, 20, 20))
-    draw.rectangle([0, H - 5, W, H], fill=(200, 20, 20))
+    # Jaw / teeth area
+    jaw_top = cy + head_ry - 50
+    jaw_bot = cy + head_ry + 30
+    draw.rectangle([cx - 70, jaw_top, cx + 70, jaw_bot], fill=skull_color)
+    # Teeth lines (vertical dark lines)
+    for tx in range(cx - 60, cx + 61, 20):
+        draw.rectangle([tx - 1, jaw_top + 5, tx + 1, jaw_bot - 5],
+                       fill=skull_dark)
+    # Horizontal line separating upper/lower teeth
+    draw.rectangle([cx - 65, jaw_top + 18, cx + 65, jaw_top + 22],
+                   fill=skull_dark)
+
+    # "GORGON" text in large red letters below skull
+    font_gorgon = load_font(72, bold=True)
+    gorgon_text = "GORGON"
+    tw, th = text_bbox(draw, gorgon_text, font_gorgon)
+    text_y = cy + head_ry + 50
+    # Slight glow effect behind text
+    draw.text(((W - tw) / 2 + 2, text_y + 2), gorgon_text,
+              fill=(100, 0, 0), font=font_gorgon)
+    draw.text(((W - tw) / 2, text_y), gorgon_text,
+              fill=(220, 0, 0), font=font_gorgon)
+
+    # Additional green matrix characters in the corners (denser)
+    for _ in range(100):
+        x = rng.randint(0, 150)
+        y = rng.randint(0, H)
+        ch = rng.choice(matrix_chars)
+        draw.text((x, y), ch, fill=(0, rng.randint(60, 160), 0), font=font_matrix)
+    for _ in range(100):
+        x = rng.randint(W - 150, W)
+        y = rng.randint(0, H)
+        ch = rng.choice(matrix_chars)
+        draw.text((x, y), ch, fill=(0, rng.randint(60, 160), 0), font=font_matrix)
 
     path = os.path.join(output_dir, "cards", "card_ransomware.png")
     img.save(path)
@@ -452,20 +657,65 @@ def generate_card_ransomware(output_dir):
 
 
 def generate_card_breaking(output_dir):
-    """Breaking news background - bright red with white center bar."""
+    """Breaking news - emergency broadcast style."""
     W, H = 1200, 630
-    img = Image.new("RGB", (W, H), (200, 15, 15))
+    # Solid red background
+    img = Image.new("RGB", (W, H), (210, 15, 15))
     draw = ImageDraw.Draw(img)
 
-    # Subtle diagonal lines pattern
-    line_color = (185, 10, 10)
-    for i in range(-H, W + H, 30):
-        draw.line([(i, 0), (i + H, H)], fill=line_color, width=1)
+    # Slightly varied red fill to avoid flat look
+    for y in range(H):
+        shade = int(210 - 30 * abs(y - H // 2) / (H // 2))
+        draw.line([(0, y), (W, y)], fill=(shade, 10, 10))
 
-    # White horizontal bar across the center
-    bar_y = H // 2 - 50
-    bar_h = 100
-    draw.rectangle([0, bar_y, W, bar_y + bar_h], fill=(255, 255, 255))
+    # White starburst lines radiating from center
+    center_x, center_y = W // 2, H // 2
+    num_rays = 36
+    for i in range(num_rays):
+        angle = 2 * math.pi * i / num_rays
+        end_x = center_x + int(700 * math.cos(angle))
+        end_y = center_y + int(400 * math.sin(angle))
+        draw.line([(center_x, center_y), (end_x, end_y)],
+                  fill=(255, 255, 255, 80), width=2)
+    # Second layer of fainter rays
+    for i in range(num_rays):
+        angle = 2 * math.pi * (i + 0.5) / num_rays
+        end_x = center_x + int(700 * math.cos(angle))
+        end_y = center_y + int(400 * math.sin(angle))
+        draw.line([(center_x, center_y), (end_x, end_y)],
+                  fill=(230, 100, 100), width=1)
+
+    # Top and bottom black bars (cinematic widescreen)
+    draw.rectangle([0, 0, W, 70], fill=(10, 10, 10))
+    draw.rectangle([0, H - 70, W, H], fill=(10, 10, 10))
+    # Red accent lines at bar edges
+    draw.rectangle([0, 68, W, 72], fill=(255, 50, 50))
+    draw.rectangle([0, H - 72, W, H - 68], fill=(255, 50, 50))
+
+    # Large "BREAKING NEWS" text centered
+    font_breaking = load_font(96, bold=True)
+    bt = "BREAKING NEWS"
+    tw, th = text_bbox(draw, bt, font_breaking)
+    # Shadow
+    draw.text(((W - tw) / 2 + 3, (H - th) / 2 + 3), bt,
+              fill=(80, 0, 0), font=font_breaking)
+    # Main text
+    draw.text(((W - tw) / 2, (H - th) / 2), bt,
+              fill=(255, 255, 255), font=font_breaking)
+
+    # Small clock/timestamp decorative element in top bar
+    font_time = load_font(20, bold=True)
+    draw.text((30, 25), "LIVE", fill=(255, 50, 50), font=font_time)
+    # Blinking dot next to LIVE
+    draw.ellipse([90, 30, 102, 42], fill=(255, 50, 50))
+    # Fake timestamp on right side of top bar
+    draw.text((W - 180, 25), "00:00 UTC", fill=(180, 180, 180), font=font_time)
+
+    # Decorative elements in bottom bar
+    font_sm = load_font(16)
+    for i in range(8):
+        x = 40 + i * 145
+        draw.rectangle([x, H - 50, x + 100, H - 48], fill=(80, 80, 80))
 
     path = os.path.join(output_dir, "cards", "card_breaking.png")
     img.save(path)
@@ -474,26 +724,93 @@ def generate_card_breaking(output_dir):
 
 
 def generate_card_alliance(output_dir):
-    """Alliance/support background - light blue to white gradient."""
+    """Alliance/support - diplomatic event backdrop style."""
     W, H = 1200, 630
-    img = gradient_bg(W, H, (180, 215, 245), (245, 248, 255))
+    # Blue to white gradient
+    img = gradient_bg(W, H, (40, 80, 160), (200, 220, 245))
     draw = ImageDraw.Draw(img)
 
-    # Two rectangular placeholder areas side by side at top (flag space outlines)
-    box_w, box_h = 180, 120
-    box_y = 80
-    left_x = W // 2 - box_w - 80
-    right_x = W // 2 + 80
+    # Thin gold border
+    gold = (200, 170, 50)
+    draw.rectangle([8, 8, W - 8, H - 8], outline=gold, width=3)
 
-    draw.rectangle([left_x, box_y, left_x + box_w, box_y + box_h],
-                   outline=(60, 100, 160), width=3)
-    draw.rectangle([right_x, box_y, right_x + box_w, box_y + box_h],
-                   outline=(60, 100, 160), width=3)
+    # Two large flag placeholder rectangles side by side
+    flag_w, flag_h = 250, 170
+    flag_y = 120
+    gap = 100
+    left_x = W // 2 - gap // 2 - flag_w
+    right_x = W // 2 + gap // 2
 
-    # Horizontal line connecting them (symbolizing alliance)
-    line_y = box_y + box_h // 2
-    draw.line([(left_x + box_w, line_y), (right_x, line_y)],
-              fill=(60, 100, 160), width=3)
+    # Valdoria blue flag placeholder (semi-transparent fill)
+    draw.rectangle([left_x, flag_y, left_x + flag_w, flag_y + flag_h],
+                   fill=(30, 60, 140, 180), outline=(50, 80, 160), width=3)
+    # Inner accent
+    draw.rectangle([left_x + 8, flag_y + 8,
+                    left_x + flag_w - 8, flag_y + flag_h - 8],
+                   outline=(80, 110, 190), width=1)
+    # Small star in Valdoria flag
+    draw_star(draw, left_x + flag_w // 2, flag_y + flag_h // 2,
+              30, 12, 5, fill=(218, 175, 50))
+
+    # Arventa green flag placeholder
+    draw.rectangle([right_x, flag_y, right_x + flag_w, flag_y + flag_h],
+                   fill=(30, 120, 55, 180), outline=(40, 140, 65), width=3)
+    draw.rectangle([right_x + 8, flag_y + 8,
+                    right_x + flag_w - 8, flag_y + flag_h - 8],
+                   outline=(60, 160, 85), width=1)
+    # Small olive branch in Arventa flag
+    stem_cx = right_x + flag_w // 2
+    stem_cy = flag_y + flag_h // 2
+    for i in range(8):
+        t = i / 7
+        sx = stem_cx - 20 + 40 * t
+        sy = stem_cy + 15 - 30 * t + 10 * math.sin(t * math.pi)
+        draw.ellipse([int(sx) - 6, int(sy) - 3, int(sx) + 6, int(sy) + 3],
+                     fill=(255, 255, 255))
+
+    # Handshake symbol in center between flags
+    hx, hy = W // 2, flag_y + flag_h // 2
+    # Left arm (angled rectangle)
+    arm_pts_l = [(hx - 50, hy - 15), (hx - 10, hy - 25),
+                 (hx - 5, hy - 10), (hx - 45, hy)]
+    draw.polygon(arm_pts_l, fill=(60, 90, 150))
+    # Right arm
+    arm_pts_r = [(hx + 50, hy - 15), (hx + 10, hy - 25),
+                 (hx + 5, hy - 10), (hx + 45, hy)]
+    draw.polygon(arm_pts_r, fill=(40, 130, 65))
+    # Hands meeting (overlapping area)
+    draw.ellipse([hx - 18, hy - 25, hx + 18, hy - 5], fill=(220, 200, 140))
+
+    # Olive branch elements at bottom
+    branch_y = H - 140
+    branch_cx = W // 2
+    # Left branch
+    for i in range(12):
+        t = i / 11
+        bx = branch_cx - 200 + 200 * t
+        by = branch_y + 40 * math.sin(t * math.pi)
+        draw.ellipse([int(bx) - 8, int(by) - 4, int(bx) + 8, int(by) + 4],
+                     fill=(50, 130, 70))
+        if i < 11:
+            bx2 = branch_cx - 200 + 200 * ((i + 1) / 11)
+            by2 = branch_y + 40 * math.sin(((i + 1) / 11) * math.pi)
+            draw.line([(int(bx), int(by)), (int(bx2), int(by2))],
+                      fill=(40, 100, 55), width=2)
+    # Right branch (mirrored)
+    for i in range(12):
+        t = i / 11
+        bx = branch_cx + 200 * t
+        by = branch_y + 40 * math.sin(t * math.pi)
+        draw.ellipse([int(bx) - 8, int(by) - 4, int(bx) + 8, int(by) + 4],
+                     fill=(50, 130, 70))
+        if i < 11:
+            bx2 = branch_cx + 200 * ((i + 1) / 11)
+            by2 = branch_y + 40 * math.sin(((i + 1) / 11) * math.pi)
+            draw.line([(int(bx), int(by)), (int(bx2), int(by2))],
+                      fill=(40, 100, 55), width=2)
+
+    # Bottom decorative bar
+    draw.rectangle([40, H - 60, W - 40, H - 57], fill=gold)
 
     path = os.path.join(output_dir, "cards", "card_alliance.png")
     img.save(path)
@@ -531,15 +848,24 @@ def load_logo_image(logo_path, size):
 
 
 def generate_official_variants(output_dir, card_official):
-    """Generate card_official_<country>.png with country logo overlaid."""
+    """Generate card_official_<country>.png with country logo and accent line."""
     print("\n=== Part 4a: Country-specific Official Statement Variants ===")
-    countries = ["valdoria", "krasnovia", "tarvek", "arventa"]
-    for country in countries:
+    countries = {
+        "valdoria": COLORS["valdoria"]["primary"],
+        "krasnovia": COLORS["krasnovia"]["primary"],
+        "tarvek": COLORS["tarvek"]["primary"],
+        "arventa": COLORS["arventa"]["primary"],
+    }
+    for country, accent_color in countries.items():
         logo_path = os.path.join(output_dir, "logos", f"{country}.png")
         logo = load_logo_image(logo_path, (100, 100))
 
         # Start from a copy of the official card
         img = card_official.copy()
+        draw = ImageDraw.Draw(img)
+
+        # Thin accent line at the top in the country's primary color
+        draw.rectangle([0, 0, img.width, 6], fill=accent_color)
 
         if logo:
             # Paste logo in top-left corner
@@ -552,25 +878,32 @@ def generate_official_variants(output_dir, card_official):
 
 
 def generate_news_variants(output_dir, card_news):
-    """Generate card_news_<media>.png with media logo overlaid."""
+    """Generate card_news_<media>.png with media logo and brand tinting."""
     print("\n=== Part 4b: Media-specific News Variants ===")
     media_map = {
-        "vnb": "vnb.png",
-        "krasnovia_today": "krasnovia_today.png",
-        "elaris_tribune": "elaris_tribune.png",
-        "mnn": "mnn.png",
+        "vnb": {"logo": "vnb.png", "color": (15, 35, 100)},
+        "krasnovia_today": {"logo": "krasnovia_today.png", "color": (180, 20, 20)},
+        "elaris_tribune": {"logo": "elaris_tribune.png", "color": (40, 40, 40)},
+        "mnn": {"logo": "mnn.png", "color": (50, 50, 55)},
     }
-    for media_key, logo_file in media_map.items():
-        logo_path = os.path.join(output_dir, "logos", logo_file)
-        # Media logos are 800x200, scale down to fit top-left (200x50)
-        logo = load_logo_image(logo_path, (200, 50))
+    for media_key, info in media_map.items():
+        logo_path = os.path.join(output_dir, "logos", info["logo"])
+        # Bigger logo: 300x75
+        logo = load_logo_image(logo_path, (300, 75))
 
         # Start from a copy of the news card
         img = card_news.copy()
+        draw = ImageDraw.Draw(img)
+
+        # Tint the header bar to match the media's brand color
+        draw.rectangle([0, 0, img.width, 70], fill=info["color"])
+        # Re-draw the separator lines
+        draw.rectangle([0, 70, img.width, 73], fill=(60, 100, 180))
+        draw.rectangle([0, 73, img.width, 74], fill=(255, 255, 255))
 
         if logo:
-            # Paste logo in top-left corner (below the red banner)
-            img.paste(logo, (20, 20), logo)
+            # Paste logo in top-left corner (overlaying the header bar)
+            img.paste(logo, (20, -2), logo)
 
         filename = f"card_news_{media_key}.png"
         path = os.path.join(output_dir, "cards", filename)
