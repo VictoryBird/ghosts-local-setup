@@ -114,17 +114,36 @@ def detect_ethnicity(first_name, last_name):
     return "mixed ethnicity"
 
 
-def clothing_from_role(role):
-    """Determine clothing description from NPC role."""
+def clothing_and_background(role):
+    """Determine clothing and background from NPC role."""
     role_lower = (role or "").lower()
-    clothing_map = {
-        "official": "wearing a business suit",
-        "military": "wearing a military uniform",
-        "citizen": "wearing casual clothes",
-        "media": "wearing smart casual with press badge",
-        "disguised": "wearing casual clothes",
+    styles = {
+        "official": {
+            "clothing": "wearing a dark formal business suit with tie",
+            "background": "in a modern government office with blurred bookshelves and national flag in background",
+        },
+        "military": {
+            "clothing": "wearing a military uniform with insignia",
+            "background": "at a military facility with blurred barracks and equipment in background",
+        },
+        "citizen": {
+            "clothing": "wearing casual everyday clothes",
+            "background": "at a cafe or urban street with warm natural lighting and blurred city in background",
+        },
+        "media": {
+            "clothing": "wearing smart casual attire with a press badge lanyard",
+            "background": "in a newsroom studio with blurred monitors and broadcast equipment in background",
+        },
+        "disguised": {
+            "clothing": "wearing casual everyday clothes",
+            "background": "at a park or coffee shop with soft natural lighting and blurred trees in background",
+        },
     }
-    return clothing_map.get(role_lower, "wearing casual clothes")
+    default = {
+        "clothing": "wearing casual clothes",
+        "background": "with a softly blurred urban background",
+    }
+    return styles.get(role_lower, default)
 
 
 def age_decade(birthdate_str):
@@ -182,28 +201,37 @@ def fetch_npcs(ghosts_url):
 
 def extract_npc_info(npc):
     """Extract relevant fields from an NPC record."""
-    # Handle nested name object or flat fields
-    name_obj = npc.get("name", {})
+    # Handle npcProfile wrapper or flat fields
+    profile = npc.get("npcProfile", npc)
+    name_obj = profile.get("name", {})
     if isinstance(name_obj, dict):
         first = name_obj.get("first", "")
         last = name_obj.get("last", "")
+    elif isinstance(name_obj, str):
+        parts = name_obj.split()
+        first = parts[0] if parts else ""
+        last = " ".join(parts[1:]) if len(parts) > 1 else ""
     else:
         first = npc.get("firstName", "")
         last = npc.get("lastName", "")
 
     full_name = f"{first} {last}".strip()
 
-    # Username from email
-    email = npc.get("email", "")
-    username = email.split("@")[0] if email else full_name.lower().replace(" ", ".")
+    # Derive username: first initial + last name, lowercase, alphanum only
+    if first and last:
+        username = (first[0] + last).lower().replace("'", "").replace(" ", "")
+        username = "".join(c for c in username if c.isalnum() or c == "_")
+    else:
+        email = profile.get("email", "")
+        username = email.split("@")[0] if email else full_name.lower().replace(" ", ".")
 
-    # Attributes
-    attrs = npc.get("attributes", {}) or {}
+    # Attributes (check npcProfile.attributes or top-level)
+    attrs = profile.get("attributes", {}) or npc.get("attributes", {}) or {}
     role = attrs.get("role", "citizen")
     country = attrs.get("country", "")
 
-    gender = npc.get("biologicalSex", "")
-    birthdate = npc.get("birthdate", "")
+    gender = profile.get("biologicalSex", npc.get("biologicalSex", ""))
+    birthdate = profile.get("birthdate", npc.get("birthdate", ""))
 
     return {
         "first_name": first,
@@ -229,12 +257,13 @@ def generate_dalle_avatar(client, npc_info):
     if gender not in ("male", "female"):
         gender = "person"
     age_dec = age_decade(npc_info["birthdate"])
-    clothing = clothing_from_role(npc_info["role"])
+    style = clothing_and_background(npc_info["role"])
 
     prompt = (
-        f"Professional headshot portrait photo of a {ethnicity} {gender} "
-        f"in their {age_dec}s {clothing}, neutral background, "
-        f"professional lighting, realistic style, shoulders up"
+        f"Professional portrait photo of a {ethnicity} {gender} "
+        f"in their {age_dec}s {style['clothing']}, {style['background']}. "
+        f"Realistic photography style, natural pose, looking at camera, "
+        f"upper body shot. No watermarks, no text, no split images."
     )
 
     print(f"    DALL-E prompt: {prompt[:80]}...")
