@@ -608,7 +608,7 @@ def process_npcs(args):
         if not args.skip_upload and username in tokens:
             token = tokens[username]
             # Handle token as string or dict
-            access_token = token if isinstance(token, str) else token.get("access_token", "")
+            access_token = token if isinstance(token, str) else (token.get("token") or token.get("access_token", ""))
             if access_token:
                 print(f"  Uploading to Mastodon...")
                 if upload_avatar_to_mastodon(args.mastodon_url, access_token, avatar_path):
